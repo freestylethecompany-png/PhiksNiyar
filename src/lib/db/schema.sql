@@ -1,6 +1,7 @@
 -- ============================================================================
--- LOCALAI MARKETPLACE - PRODUCTION POSTGRESQL / SUPABASE SCHEMA
--- Initial Market: Chilakaluripet, Andhra Pradesh, India
+-- LOCALAI / FIXNEAR MARKETPLACE - PRODUCTION POSTGRESQL / SUPABASE SCHEMA
+-- Initial Market: Chilakaluripet, Andhra Pradesh, India (PIN: 522616)
+-- 100% Idempotent Script: Safe to execute repeatedly without errors
 -- ============================================================================
 
 -- Extensions
@@ -8,31 +9,55 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "citext";
 
 -- ============================================================================
--- ENUMS
+-- ENUMS (Safely created with IF NOT EXISTS checks)
 -- ============================================================================
-CREATE TYPE user_role AS ENUM ('CUSTOMER', 'PROVIDER', 'ADMIN');
-CREATE TYPE verification_status AS ENUM ('UNVERIFIED', 'PENDING', 'VERIFIED', 'REJECTED', 'SUSPENDED');
-CREATE TYPE booking_status AS ENUM (
-  'REQUESTED',
-  'ACCEPTED',
-  'REJECTED',
-  'CANCELLED',
-  'SCHEDULED',
-  'PROVIDER_ON_THE_WAY',
-  'ARRIVED',
-  'IN_PROGRESS',
-  'PAYMENT_PENDING',
-  'PAID',
-  'COMPLETED',
-  'DISPUTED'
-);
-CREATE TYPE payment_status AS ENUM ('PENDING', 'SUCCESS', 'FAILED', 'REFUNDED');
-CREATE TYPE payment_method AS ENUM ('UPI', 'CASH', 'RAZORPAY');
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+    CREATE TYPE user_role AS ENUM ('CUSTOMER', 'PROVIDER', 'ADMIN');
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'verification_status') THEN
+    CREATE TYPE verification_status AS ENUM ('UNVERIFIED', 'PENDING', 'VERIFIED', 'REJECTED', 'SUSPENDED');
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'booking_status') THEN
+    CREATE TYPE booking_status AS ENUM (
+      'REQUESTED',
+      'ACCEPTED',
+      'REJECTED',
+      'CANCELLED',
+      'SCHEDULED',
+      'PROVIDER_ON_THE_WAY',
+      'ARRIVED',
+      'IN_PROGRESS',
+      'PAYMENT_PENDING',
+      'PAID',
+      'COMPLETED',
+      'DISPUTED'
+    );
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_status') THEN
+    CREATE TYPE payment_status AS ENUM ('PENDING', 'SUCCESS', 'FAILED', 'REFUNDED');
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_method') THEN
+    CREATE TYPE payment_method AS ENUM ('UPI', 'CASH', 'RAZORPAY');
+  END IF;
+END $$;
 
 -- ============================================================================
 -- 1. CITIES & SERVICE AREAS
 -- ============================================================================
-CREATE TABLE cities (
+CREATE TABLE IF NOT EXISTS cities (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(100) NOT NULL,
   district VARCHAR(100) NOT NULL,
@@ -45,7 +70,7 @@ CREATE TABLE cities (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE service_areas (
+CREATE TABLE IF NOT EXISTS service_areas (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   city_id UUID NOT NULL REFERENCES cities(id) ON DELETE CASCADE,
   name VARCHAR(150) NOT NULL,
@@ -59,7 +84,7 @@ CREATE TABLE service_areas (
 -- ============================================================================
 -- 2. USERS & PROFILES
 -- ============================================================================
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   phone VARCHAR(20) UNIQUE NOT NULL,
   name VARCHAR(150) NOT NULL,
@@ -70,7 +95,7 @@ CREATE TABLE users (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE customers (
+CREATE TABLE IF NOT EXISTS customers (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   total_bookings INT NOT NULL DEFAULT 0,
@@ -80,7 +105,7 @@ CREATE TABLE customers (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE addresses (
+CREATE TABLE IF NOT EXISTS addresses (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   title VARCHAR(50) NOT NULL DEFAULT 'Home',
@@ -98,7 +123,7 @@ CREATE TABLE addresses (
 -- ============================================================================
 -- 3. PROVIDERS & CAPABILITIES
 -- ============================================================================
-CREATE TABLE providers (
+CREATE TABLE IF NOT EXISTS providers (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   business_name VARCHAR(200) NOT NULL,
@@ -124,11 +149,17 @@ CREATE TABLE providers (
   response_rate NUMERIC(5, 2) NOT NULL DEFAULT 100.00,
   avg_response_minutes INT NOT NULL DEFAULT 15,
   portfolio_images TEXT[] DEFAULT '{}',
+  aadhaar_verified BOOLEAN NOT NULL DEFAULT false,
+  aadhaar_verified_at TIMESTAMPTZ,
+  aadhaar_hash TEXT,
+  place_verified BOOLEAN NOT NULL DEFAULT true,
+  place_verified_at TIMESTAMPTZ,
+  workshop_gps_verified BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE provider_services (
+CREATE TABLE IF NOT EXISTS provider_services (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   provider_id UUID NOT NULL REFERENCES providers(id) ON DELETE CASCADE,
   category VARCHAR(100) NOT NULL,
@@ -138,7 +169,7 @@ CREATE TABLE provider_services (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE provider_availability (
+CREATE TABLE IF NOT EXISTS provider_availability (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   provider_id UUID NOT NULL REFERENCES providers(id) ON DELETE CASCADE,
   date DATE NOT NULL,
@@ -150,7 +181,7 @@ CREATE TABLE provider_availability (
 -- ============================================================================
 -- 4. SERVICE REQUESTS & AI METADATA
 -- ============================================================================
-CREATE TABLE service_requests (
+CREATE TABLE IF NOT EXISTS service_requests (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   customer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   raw_text TEXT NOT NULL,
@@ -163,7 +194,7 @@ CREATE TABLE service_requests (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE service_request_messages (
+CREATE TABLE IF NOT EXISTS service_request_messages (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   request_id UUID NOT NULL REFERENCES service_requests(id) ON DELETE CASCADE,
   sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -174,7 +205,7 @@ CREATE TABLE service_request_messages (
 -- ============================================================================
 -- 5. BOOKINGS & STATE MACHINE
 -- ============================================================================
-CREATE TABLE bookings (
+CREATE TABLE IF NOT EXISTS bookings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   service_request_id UUID REFERENCES service_requests(id) ON DELETE SET NULL,
   customer_id UUID NOT NULL REFERENCES users(id),
@@ -192,11 +223,13 @@ CREATE TABLE bookings (
   platform_commission_percent NUMERIC(5, 2) NOT NULL DEFAULT 10.00,
   platform_commission_amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
   provider_payout_amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+  start_job_otp VARCHAR(6),
+  otp_verified BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE booking_status_history (
+CREATE TABLE IF NOT EXISTS booking_status_history (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   booking_id UUID NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
   status booking_status NOT NULL,
@@ -208,7 +241,7 @@ CREATE TABLE booking_status_history (
 -- ============================================================================
 -- 6. PAYMENTS & PAYOUTS
 -- ============================================================================
-CREATE TABLE payments (
+CREATE TABLE IF NOT EXISTS payments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   booking_id UUID NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
   customer_id UUID NOT NULL REFERENCES users(id),
@@ -223,7 +256,7 @@ CREATE TABLE payments (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE provider_payouts (
+CREATE TABLE IF NOT EXISTS provider_payouts (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   provider_id UUID NOT NULL REFERENCES providers(id),
   amount NUMERIC(10, 2) NOT NULL,
@@ -235,7 +268,7 @@ CREATE TABLE provider_payouts (
 -- ============================================================================
 -- 7. REVIEWS & DISPUTES
 -- ============================================================================
-CREATE TABLE reviews (
+CREATE TABLE IF NOT EXISTS reviews (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   booking_id UUID UNIQUE NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
   customer_id UUID NOT NULL REFERENCES users(id),
@@ -248,7 +281,7 @@ CREATE TABLE reviews (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE disputes (
+CREATE TABLE IF NOT EXISTS disputes (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   booking_id UUID NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
   opened_by_user_id UUID NOT NULL REFERENCES users(id),
@@ -259,20 +292,10 @@ CREATE TABLE disputes (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE reports (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  reported_by_id UUID NOT NULL REFERENCES users(id),
-  target_user_id UUID NOT NULL REFERENCES users(id),
-  category VARCHAR(100) NOT NULL,
-  details TEXT NOT NULL,
-  status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
 -- ============================================================================
 -- 8. PLATFORM SETTINGS & AUDIT LOGS
 -- ============================================================================
-CREATE TABLE platform_settings (
+CREATE TABLE IF NOT EXISTS platform_settings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   commission_percent NUMERIC(5, 2) NOT NULL DEFAULT 10.00,
   matching_weights JSONB NOT NULL DEFAULT '{
@@ -285,11 +308,11 @@ CREATE TABLE platform_settings (
     "priceCompatibility": 0.10
   }'::jsonb,
   default_search_radius_km NUMERIC(5, 2) NOT NULL DEFAULT 15.00,
-  upi_vpa VARCHAR(100) NOT NULL DEFAULT 'localai.payments@okhdfcbank',
+  upi_vpa VARCHAR(100) NOT NULL DEFAULT 'fixnear.payments@okhdfcbank',
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   actor_id UUID REFERENCES users(id) ON DELETE SET NULL,
   actor_role user_role NOT NULL,
@@ -301,19 +324,46 @@ CREATE TABLE audit_logs (
 );
 
 -- ============================================================================
--- INDEXES FOR HIGH-EFFICIENCY QUERIES
+-- 9. LIVE DELIVERY TRACKING & OTP AUTH
 -- ============================================================================
-CREATE INDEX idx_providers_category ON providers(primary_category);
-CREATE INDEX idx_providers_verification ON providers(verification_status);
-CREATE INDEX idx_providers_geo ON providers(latitude, longitude);
-CREATE INDEX idx_bookings_customer ON bookings(customer_id);
-CREATE INDEX idx_bookings_provider ON bookings(provider_id);
-CREATE INDEX idx_bookings_status ON bookings(status);
-CREATE INDEX idx_reviews_provider ON reviews(provider_id);
-CREATE INDEX idx_service_areas_city ON service_areas(city_id);
+CREATE TABLE IF NOT EXISTS delivery_tracking (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  order_id VARCHAR(100) UNIQUE NOT NULL,
+  booking_id UUID REFERENCES bookings(id) ON DELETE SET NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'ORDER_CONFIRMED',
+  status_history JSONB NOT NULL DEFAULT '[]'::jsonb,
+  customer JSONB NOT NULL,
+  pickup JSONB NOT NULL,
+  partner JSONB NOT NULL,
+  metrics JSONB NOT NULL,
+  route_geometry JSONB NOT NULL DEFAULT '[]'::jsonb,
+  tracking_active BOOLEAN NOT NULL DEFAULT true,
+  traffic_level VARCHAR(20) NOT NULL DEFAULT 'LOW',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS otp_codes (
+  phone VARCHAR(20) PRIMARY KEY,
+  code VARCHAR(10) NOT NULL,
+  expires_at BIGINT NOT NULL
+);
 
 -- ============================================================================
--- ROW LEVEL SECURITY (RLS) POLICIES
+-- 10. INDEXES FOR HIGH-EFFICIENCY QUERIES
+-- ============================================================================
+CREATE INDEX IF NOT EXISTS idx_providers_category ON providers(primary_category);
+CREATE INDEX IF NOT EXISTS idx_providers_verification ON providers(verification_status);
+CREATE INDEX IF NOT EXISTS idx_providers_geo ON providers(latitude, longitude);
+CREATE INDEX IF NOT EXISTS idx_bookings_customer ON bookings(customer_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_provider ON bookings(provider_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
+CREATE INDEX IF NOT EXISTS idx_reviews_provider ON reviews(provider_id);
+CREATE INDEX IF NOT EXISTS idx_service_areas_city ON service_areas(city_id);
+CREATE INDEX IF NOT EXISTS idx_delivery_tracking_order ON delivery_tracking(order_id);
+
+-- ============================================================================
+-- 11. ROW LEVEL SECURITY (RLS) POLICIES
 -- ============================================================================
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
@@ -323,10 +373,12 @@ ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
--- Sample policy: Users can read their own records, public can read verified providers
+-- Idempotent RLS Policies
+DROP POLICY IF EXISTS "Public read verified providers" ON providers;
 CREATE POLICY "Public read verified providers" ON providers
   FOR SELECT USING (verification_status = 'VERIFIED');
 
+DROP POLICY IF EXISTS "Users read own bookings" ON bookings;
 CREATE POLICY "Users read own bookings" ON bookings
   FOR SELECT USING (
     auth.uid() = customer_id OR 
