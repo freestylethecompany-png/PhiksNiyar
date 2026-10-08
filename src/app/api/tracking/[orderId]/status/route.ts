@@ -35,6 +35,22 @@ export async function PATCH(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
+    // Authentication & Authorization check
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized: Authentication required.' }, { status: 401 });
+    }
+    const isPartner = session.userId === order.partner.id;
+    const isCustomer = session.userId === order.customer.id;
+    const isAdmin = session.role === 'ADMIN';
+
+    // Partner can advance delivery status; customer can only cancel before departure
+    if (!isAdmin && !isPartner && !(isCustomer && status === 'CANCELLED')) {
+      return NextResponse.json(
+        { error: 'Forbidden: You are not authorized to change this delivery status.' },
+        { status: 403 }
+      );
+    }
+
     const updatedOrder = db.updateDeliveryStatus(orderId, status as DeliveryStatus, note);
     if (!updatedOrder) {
       return NextResponse.json({ error: 'Failed to update order status' }, { status: 500 });

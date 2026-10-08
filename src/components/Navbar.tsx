@@ -64,13 +64,12 @@ export default function Navbar({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const t = translations[currentLang];
 
-  // Detect if demo mode is enabled via URL param or env
+  // Demo mode is only available in development when explicitly enabled via environment variable
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const hasDemoParam = urlParams.has('demo');
+      const isDev = process.env.NODE_ENV !== 'production';
       const envDemo = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-      setIsDemoMode(hasDemoParam || envDemo);
+      setIsDemoMode(isDev && envDemo);
     }
   }, []);
 

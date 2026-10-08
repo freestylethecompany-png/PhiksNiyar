@@ -938,12 +938,19 @@ class PersistentDatabase {
     };
   }
 
-  // --- SEEDING ---
+  // --- SEEDING (DEVELOPMENT / TEST ONLY) ---
   private seedIfEmpty() {
+    // SECURITY: Never inject synthetic test profiles, fake ratings, or dummy bookings in production.
+    const isProduction = process.env.NODE_ENV === 'production';
+    const allowSeed = process.env.SEED_DEMO_DATA === 'true' && !isProduction;
+    if (isProduction || !allowSeed) {
+      return;
+    }
+
     const userCount = (sqlite.prepare('SELECT count(*) as count FROM users').get() as any).count;
     if (userCount > 0) return;
 
-    console.log('Seeding persistent database with Chilakaluripet data...');
+    console.log('Seeding development database with initial test fixtures...');
 
     // 1. Customer User
     this.saveUser({
@@ -1262,6 +1269,12 @@ class PersistentDatabase {
 
   public seedDeliveriesIfEmpty() {
     try {
+      const isProduction = process.env.NODE_ENV === 'production';
+      const allowSeed = process.env.SEED_DEMO_DATA === 'true' && !isProduction;
+      if (isProduction || !allowSeed) {
+        return;
+      }
+
       const count = (sqlite.prepare('SELECT count(*) as count FROM delivery_tracking').get() as any).count;
       if (count > 0) return;
 

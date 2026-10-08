@@ -50,17 +50,11 @@ export default function ProviderOnboardingModal({ onSuccess, onClose }: Provider
   const [bio, setBio] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-  // High-Security Verifications State
   const [placeVerified, setPlaceVerified] = useState(false);
   const [placeGpsDistance, setPlaceGpsDistance] = useState<number | null>(null);
   const [isVerifyingGps, setIsVerifyingGps] = useState(false);
 
-  const [aadhaarOtpSent, setAadhaarOtpSent] = useState(false);
-  const [aadhaarOtpInput, setAadhaarOtpInput] = useState('');
-  const [aadhaarVerified, setAadhaarVerified] = useState(false);
-  const [isVerifyingAadhaarOtp, setIsVerifyingAadhaarOtp] = useState(false);
-
-  // Live Aadhaar validation check
+  // Live ID format validation check
   const aadhaarCheck = validateAadhaarVerhoeff(aadhaarNumber);
 
   const handleVerifyGpsLocation = () => {
@@ -77,7 +71,6 @@ export default function ProviderOnboardingModal({ onSuccess, onClose }: Provider
             setPlaceVerified(true);
             setPlaceGpsDistance(check.distanceKm);
           } else {
-            // If GPS is out of town, fall back to registered town area coordinates
             const fallbackCheck = verifyPlaceGeofence(targetArea.latitude, targetArea.longitude);
             setPlaceVerified(fallbackCheck.isVerified);
             setPlaceGpsDistance(fallbackCheck.distanceKm);
@@ -85,7 +78,6 @@ export default function ProviderOnboardingModal({ onSuccess, onClose }: Provider
           setIsVerifyingGps(false);
         },
         () => {
-          // Geolocation blocked: verify via chosen Chilakaluripet locality
           const check = verifyPlaceGeofence(targetArea.latitude, targetArea.longitude);
           setPlaceVerified(check.isVerified);
           setPlaceGpsDistance(check.distanceKm);
@@ -99,27 +91,6 @@ export default function ProviderOnboardingModal({ onSuccess, onClose }: Provider
       setPlaceGpsDistance(check.distanceKm);
       setIsVerifyingGps(false);
     }
-  };
-
-  const handleSendAadhaarOtp = () => {
-    if (!aadhaarCheck.isValid) {
-      setErrorMsg(aadhaarCheck.error || 'Please enter a valid 12-digit Aadhaar number first.');
-      return;
-    }
-    setErrorMsg(null);
-    setAadhaarOtpSent(true);
-  };
-
-  const handleConfirmAadhaarOtp = () => {
-    if (aadhaarOtpInput.trim().length < 4) {
-      setErrorMsg('Please enter the 4 to 6 digit OTP sent to your Aadhaar-linked mobile.');
-      return;
-    }
-    setIsVerifyingAadhaarOtp(true);
-    setTimeout(() => {
-      setAadhaarVerified(true);
-      setIsVerifyingAadhaarOtp(false);
-    }, 800);
   };
 
   const handleNext = () => {
@@ -485,14 +456,14 @@ export default function ProviderOnboardingModal({ onSuccess, onClose }: Provider
             {step === 5 && (
               <div>
                 <h4 style={{ fontSize: '1rem', marginBottom: '0.5rem', fontWeight: 700 }}>
-                  5. UIDAI Aadhaar Verification & Trust Badge
+                  5. Government ID & Trade Credentials Submission
                 </h4>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                  Government Aadhaar validation protects consumers and grants you the green &ldquo;100% Aadhaar Verified&rdquo; partner badge.
+                  Provide your 12-digit government identity reference and trade details for verification by the FixNear onboarding compliance team.
                 </p>
 
                 <div className="form-group">
-                  <label className="form-label">Aadhaar Card Number (12 Digits)</label>
+                  <label className="form-label">Government ID / Aadhaar Reference (12 Digits)</label>
                   <div style={{ position: 'relative' }}>
                     <input
                       type="text"
@@ -501,8 +472,6 @@ export default function ProviderOnboardingModal({ onSuccess, onClose }: Provider
                       value={aadhaarNumber}
                       onChange={(e) => {
                         setAadhaarNumber(e.target.value.replace(/\D/g, ''));
-                        setAadhaarVerified(false);
-                        setAadhaarOtpSent(false);
                       }}
                       placeholder="e.g. 5489 1234 4812"
                       style={{ letterSpacing: '0.1em', fontWeight: 700 }}
@@ -520,7 +489,7 @@ export default function ProviderOnboardingModal({ onSuccess, onClose }: Provider
                           color: aadhaarCheck.isValid ? 'var(--success)' : 'var(--danger)',
                         }}
                       >
-                        {aadhaarCheck.isValid ? '✓ Verhoeff Valid' : '✗ Invalid Checksum'}
+                        {aadhaarCheck.isValid ? '✓ Valid Format' : '✗ Invalid Format'}
                       </span>
                     )}
                   </div>
@@ -532,93 +501,29 @@ export default function ProviderOnboardingModal({ onSuccess, onClose }: Provider
                   )}
                 </div>
 
-                {/* UIDAI Aadhaar OTP / DigiLocker Verification Box */}
-                {aadhaarCheck.isValid && !aadhaarVerified && (
-                  <div
-                    style={{
-                      background: 'var(--primary-50)',
-                      border: '1px solid var(--primary-200)',
-                      borderRadius: 'var(--radius-md)',
-                      padding: '0.85rem 1rem',
-                      marginTop: '0.85rem',
-                    }}
-                  >
-                    {!aadhaarOtpSent ? (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                        <div>
-                          <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--primary-dark)' }}>
-                            Verify UIDAI Identity Instantly
-                          </div>
-                          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                            Simulates real-time UIDAI OTP to registered mobile
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          className="btn-primary"
-                          style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}
-                          onClick={handleSendAadhaarOtp}
-                        >
-                          <Lock size={13} />
-                          <span>Send Aadhaar OTP</span>
-                        </button>
-                      </div>
-                    ) : (
-                      <div>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary-dark)', marginBottom: '0.4rem' }}>
-                          Enter 6-Digit OTP sent to your Aadhaar-linked mobile:
-                        </div>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <input
-                            type="text"
-                            className="form-input"
-                            maxLength={6}
-                            value={aadhaarOtpInput}
-                            onChange={(e) => setAadhaarOtpInput(e.target.value)}
-                            placeholder="e.g. 482910 (Demo)"
-                            style={{ width: '160px', letterSpacing: '0.2em', fontWeight: 800 }}
-                          />
-                          <button
-                            type="button"
-                            className="btn-primary"
-                            style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}
-                            onClick={handleConfirmAadhaarOtp}
-                            disabled={isVerifyingAadhaarOtp}
-                          >
-                            {isVerifyingAadhaarOtp ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
-                            <span>Verify & Bind</span>
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {aadhaarVerified && (
-                  <div
-                    style={{
-                      background: '#ecfdf5',
-                      border: '1px solid #a7f3d0',
-                      borderRadius: 'var(--radius-md)',
-                      padding: '0.85rem 1rem',
-                      marginTop: '0.85rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.6rem',
-                      color: '#065f46',
-                    }}
-                  >
-                    <ShieldCheck size={20} color="#059669" />
-                    <div>
-                      <div style={{ fontWeight: 800, fontSize: '0.86rem' }}>
-                        UIDAI Aadhaar Verified: {maskAadhaarNumber(aadhaarNumber)}
-                      </div>
-                      <div style={{ fontSize: '0.72rem', color: '#047857' }}>
-                        Digitally bound with Verhoeff integrity check • 100% Verified Local Pro badge granted
-                      </div>
+                <div
+                  style={{
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '0.85rem 1rem',
+                    marginTop: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.6rem',
+                    color: '#334155',
+                  }}
+                >
+                  <ShieldCheck size={20} color="#059669" style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>
+                      DPDP Act Privacy Compliance Notice
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                      Your ID reference is masked ({maskAadhaarNumber(aadhaarNumber || '123456789012')}) and never stored in raw plaintext or exposed to consumers. Official verification will be processed by the FixNear verification team before granting the Verified badge.
                     </div>
                   </div>
-                )}
+                </div>
 
                 <div
                   style={{

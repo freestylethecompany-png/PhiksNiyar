@@ -44,7 +44,20 @@ export async function POST(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    // 4. Security: Enforce tracking stop when delivery is complete
+    // 4. Authentication & Authorization: Only assigned partner or admin can report location
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized: Authentication required.' }, { status: 401 });
+    }
+    const isPartner = session.userId === order.partner.id;
+    const isAdmin = session.role === 'ADMIN';
+    if (!isPartner && !isAdmin) {
+      return NextResponse.json(
+        { error: 'Forbidden: Only the assigned delivery partner can update location coordinates.' },
+        { status: 403 }
+      );
+    }
+
+    // 5. Security: Enforce tracking stop when delivery is complete
     if (!order.trackingActive || order.status === 'DELIVERED') {
       return NextResponse.json(
         { error: 'Live tracking has concluded for this delivery order.' },

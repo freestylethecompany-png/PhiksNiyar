@@ -1,5 +1,6 @@
 import { db } from '@/lib/db/database';
 import { trackingBus, TrackingBroadcastPayload } from '@/lib/tracking/eventBus';
+import { getAuthSession } from '@/lib/auth/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,16 +9,30 @@ export async function GET(
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   const { orderId } = await params;
+  const session = await getAuthSession();
 
-  let initialOrder = db.getDeliveryTracking(orderId);
-  if (!initialOrder) {
-    db.seedDeliveriesIfEmpty();
-    initialOrder = db.getDeliveryTracking(orderId);
+  if (!session) {
+    return new Response(JSON.stringify({ error: 'Unauthorized: Authentication required.' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
+  const initialOrder = db.getDeliveryTracking(orderId);
   if (!initialOrder) {
     return new Response(JSON.stringify({ error: 'Order not found' }), {
       status: 404,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const isCustomer = session.userId === initialOrder.customer.id;
+  const isPartner = session.userId === initialOrder.partner.id;
+  const isAdmin = session.role === 'ADMIN' || session.role === 'SUPPORT';
+
+  if (!isCustomer && !isPartner && !isAdmin) {
+    return new Response(JSON.stringify({ error: 'Forbidden: Unauthorized to stream this delivery.' }), {
+      status: 403,
       headers: { 'Content-Type': 'application/json' },
     });
   }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/database';
 import { VerificationStatus } from '@/lib/db/types';
 import { getAuthSession } from '@/lib/auth/session';
+import { canTransitionVerification } from '@/lib/db/stateMachine';
 
 export async function GET() {
   try {
@@ -90,6 +91,11 @@ export async function POST(request: Request) {
     }
 
     const previousStatus = provider.verificationStatus;
+    const transitionCheck = canTransitionVerification(previousStatus, newStatus as VerificationStatus, session.role);
+    if (!transitionCheck.allowed) {
+      return NextResponse.json({ error: transitionCheck.reason }, { status: 400 });
+    }
+
     provider.verificationStatus = newStatus as VerificationStatus;
     provider.updatedAt = new Date().toISOString();
     db.saveProvider(provider);

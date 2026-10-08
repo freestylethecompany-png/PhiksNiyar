@@ -1,5 +1,5 @@
 // Booking State Machine and Transition Guard
-import { BookingStatus, UserRole } from './types';
+import { BookingStatus, UserRole, VerificationStatus } from './types';
 
 export interface TransitionRule {
   from: BookingStatus[];
@@ -101,6 +101,90 @@ export function canTransitionBooking(
     return {
       allowed: false,
       reason: `Unauthorized: User role '${actorRole}' is not permitted to transition booking to '${targetStatus}'.`,
+    };
+  }
+
+  return { allowed: true };
+}
+
+// ============================================================================
+// PROVIDER VERIFICATION STATE MACHINE (Phase 2 & Phase 3)
+// States: PENDING -> DOCUMENT_SUBMITTED -> KYC_PROCESSING -> VERIFIED / REJECTED / SUSPENDED
+// ============================================================================
+export interface VerificationTransitionRule {
+  from: VerificationStatus[];
+  to: VerificationStatus;
+  allowedRoles: UserRole[];
+  description: string;
+}
+
+export const VALID_VERIFICATION_TRANSITIONS: VerificationTransitionRule[] = [
+  {
+    from: ['PENDING'],
+    to: 'DOCUMENT_SUBMITTED',
+    allowedRoles: ['PROVIDER', 'ADMIN'],
+    description: 'Provider submits identification and workshop documents for verification',
+  },
+  {
+    from: ['PENDING', 'DOCUMENT_SUBMITTED'],
+    to: 'KYC_PROCESSING',
+    allowedRoles: ['ADMIN', 'SUPPORT'],
+    description: 'Verification team or authorized KYC provider initiates compliance checks',
+  },
+  {
+    from: ['KYC_PROCESSING', 'DOCUMENT_SUBMITTED'],
+    to: 'VERIFIED',
+    allowedRoles: ['ADMIN'],
+    description: 'Administrator approves documents and grants verified partner status',
+  },
+  {
+    from: ['KYC_PROCESSING', 'DOCUMENT_SUBMITTED', 'PENDING'],
+    to: 'REJECTED',
+    allowedRoles: ['ADMIN'],
+    description: 'Administrator rejects onboarding due to invalid credentials or fraud',
+  },
+  {
+    from: ['VERIFIED', 'KYC_PROCESSING'],
+    to: 'SUSPENDED',
+    allowedRoles: ['ADMIN'],
+    description: 'Administrator suspends provider due to policy violation or investigation',
+  },
+  {
+    from: ['SUSPENDED', 'REJECTED'],
+    to: 'KYC_PROCESSING',
+    allowedRoles: ['ADMIN'],
+    description: 'Administrator reopens verification case for remediation',
+  },
+];
+
+export function canTransitionVerification(
+  currentStatus: VerificationStatus,
+  targetStatus: VerificationStatus,
+  actorRole: UserRole
+): { allowed: boolean; reason?: string } {
+  // Client can never self-verify
+  if (targetStatus === 'VERIFIED' && actorRole !== 'ADMIN') {
+    return {
+      allowed: false,
+      reason: 'Unauthorized: Only platform administrators can grant VERIFIED status.',
+    };
+  }
+
+  const rule = VALID_VERIFICATION_TRANSITIONS.find(
+    (t) => t.to === targetStatus && t.from.includes(currentStatus)
+  );
+
+  if (!rule) {
+    return {
+      allowed: false,
+      reason: `Illegal verification transition: Cannot transition provider from '${currentStatus}' to '${targetStatus}'.`,
+    };
+  }
+
+  if (!rule.allowedRoles.includes(actorRole)) {
+    return {
+      allowed: false,
+      reason: `Unauthorized: Role '${actorRole}' is not authorized to transition verification status to '${targetStatus}'.`,
     };
   }
 

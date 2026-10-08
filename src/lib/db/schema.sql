@@ -13,13 +13,18 @@ CREATE EXTENSION IF NOT EXISTS "citext";
 -- ============================================================================
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
-    CREATE TYPE user_role AS ENUM ('CUSTOMER', 'PROVIDER', 'ADMIN');
+    CREATE TYPE user_role AS ENUM ('CUSTOMER', 'PROVIDER', 'SUPPORT', 'ADMIN');
+  ELSE
+    ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'SUPPORT';
   END IF;
 END $$;
 
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'verification_status') THEN
-    CREATE TYPE verification_status AS ENUM ('UNVERIFIED', 'PENDING', 'VERIFIED', 'REJECTED', 'SUSPENDED');
+    CREATE TYPE verification_status AS ENUM ('PENDING', 'DOCUMENT_SUBMITTED', 'KYC_PROCESSING', 'VERIFIED', 'REJECTED', 'SUSPENDED');
+  ELSE
+    ALTER TYPE verification_status ADD VALUE IF NOT EXISTS 'DOCUMENT_SUBMITTED';
+    ALTER TYPE verification_status ADD VALUE IF NOT EXISTS 'KYC_PROCESSING';
   END IF;
 END $$;
 

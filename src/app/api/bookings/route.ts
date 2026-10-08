@@ -1,34 +1,71 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/database';
 import { canTransitionBooking } from '@/lib/db/stateMachine';
-import { Booking, BookingStatus, UserRole, Review } from '@/lib/db/types';
+import { Booking, BookingStatus, UserRole } from '@/lib/db/types';
 import { getAuthSession } from '@/lib/auth/session';
-import { generateDoorstepOtp } from '@/lib/security/aadhaarVerifier';
+import { generateSecureDoorstepOtp } from '@/lib/security/cryptoUtils';
 
 export async function GET(request: Request) {
   try {
     const session = await getAuthSession();
-    const { searchParams } = new URL(request.url);
-    const role = (searchParams.get('role') as UserRole) || session?.role || 'CUSTOMER';
-    const userId = searchParams.get('userId') || session?.userId;
-    const providerId = searchParams.get('providerId');
 
-    let bookings = db.getBookings();
-
-    if (role === 'PROVIDER') {
-      let targetProvId = providerId;
-      if (!targetProvId && session && session.role === 'PROVIDER') {
-        const prov = db.getProviderByUserId(session.userId);
-        if (prov) targetProvId = prov.id;
-      }
-      targetProvId = targetProvId || 'prov-1';
-      bookings = bookings.filter((b) => b.providerId === targetProvId);
-    } else if (role === 'CUSTOMER') {
-      const targetCustId = userId || 'usr-cust-1';
-      bookings = bookings.filter((b) => b.customerId === targetCustId);
+    // 1. Mandatory Authentication (BOLA / IDOR Prevention)
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Authentication required to view bookings.' },
+        { status: 401 }
+      );
     }
 
-    return NextResponse.json({ success: true, bookings, currentUserId: session?.userId });
+    let allBookings = db.getBookings();
+    let accessibleBookings: Booking[] = [];
+
+    if (session.role === 'ADMIN' || session.role === 'SUPPORT') {
+      accessibleBookings = allBookings;
+    } else if (session.role === 'PROVIDER') {
+      const provider = db.getProviderByUserId(session.userId);
+      if (!provider) {
+        return NextResponse.json({ success: true, bookings: [] });
+      }
+      accessibleBookings = allBookings.filter((b) => b.providerId === provider.id);
+
+      // SECURITY CRITICAL: Strip Doorstep Start-OTP and protect residential street addresses
+      // Providers must NEVER see startOtp before or after arrival.
+      accessibleBookings = accessibleBookings.map((b) => {
+        const sanitized = { ...b };
+        delete sanitized.startOtp; // Strip OTP from provider payload
+
+        // If booking is not yet accepted/active, mask exact street address (locality only)
+        const isActiveOrArrived = [
+          'ACCEPTED',
+          'SCHEDULED',
+          'PROVIDER_ON_THE_WAY',
+          'ARRIVED',
+          'IN_PROGRESS',
+          'PAYMENT_PENDING',
+          'COMPLETED',
+        ].includes(b.status);
+
+        if (!isActiveOrArrived && sanitized.customerAddress) {
+          sanitized.customerAddress = {
+            ...sanitized.customerAddress,
+            street: 'Revealed upon acceptance',
+          };
+        }
+
+        return sanitized;
+      });
+    } else {
+      // CUSTOMER Role: strictly limited to their own bookings
+      accessibleBookings = allBookings.filter((b) => b.customerId === session.userId);
+    }
+
+    return NextResponse.json({
+      success: true,
+      count: accessibleBookings.length,
+      bookings: accessibleBookings,
+      currentUserId: session.userId,
+    });
   } catch (error) {
     console.error('Error in GET /api/bookings:', error);
     return NextResponse.json({ error: 'Failed to fetch bookings' }, { status: 500 });
@@ -38,10 +75,18 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const session = await getAuthSession();
+
+    // 1. Mandatory Authentication: Customer role required
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Please log in with your phone to book a service.' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const {
       providerId,
-      customerId,
       category,
       subcategory,
       description,
@@ -62,23 +107,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Selected provider not found' }, { status: 404 });
     }
 
-    // Authenticated user resolution
-    const activeUserId = session?.userId || customerId || 'usr-cust-1';
-    const customerUser = db.getUserById(activeUserId) || {
-      id: activeUserId,
-      name: session?.name || 'Suresh Babu',
-      phone: session?.phone || '+91 98480 12345',
-      role: 'CUSTOMER' as UserRole,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    // 2. Authoritative customer identity from verified session (prevents impersonation)
+    const customerUser = db.getUserById(session.userId);
+    if (!customerUser) {
+      return NextResponse.json({ error: 'Customer user profile not found' }, { status: 404 });
+    }
 
+    // 3. Authoritative server-side pricing calculation (prevents client price tampering)
     const settings = db.getSettings();
-    const commissionPercent = settings.platformCommissionPercent;
-    const visitingCharge = provider.pricingModel.visitingCharge;
+    const commissionPercent = settings.platformCommissionPercent || 10.0;
+    const visitingCharge = Number(provider.pricingModel.visitingCharge) || 199;
     const estAmount = visitingCharge;
-    const commissionAmt = (estAmount * commissionPercent) / 100;
-    const providerPayout = estAmount - commissionAmt;
+    const commissionAmt = Math.round(((estAmount * commissionPercent) / 100) * 100) / 100;
+    const providerPayout = Math.round((estAmount - commissionAmt) * 100) / 100;
+
+    // 4. Generate cryptographically sound 4-digit Doorstep Start-OTP
+    const secureStartOtp = generateSecureDoorstepOtp();
+
+    const providerUser = db.getUserById(provider.userId);
 
     const newBooking: Booking = {
       id: `bk-${Date.now()}`,
@@ -86,7 +132,7 @@ export async function POST(request: Request) {
       customerName: customerUser.name,
       customerPhone: customerUser.phone,
       customerAddress: address || {
-        id: 'addr-default',
+        id: `addr-${Date.now()}`,
         userId: customerUser.id,
         title: 'Home',
         street: 'Main Road',
@@ -100,19 +146,20 @@ export async function POST(request: Request) {
       },
       providerId: provider.id,
       providerName: provider.businessName,
-      providerPhone: db.getUserById(provider.userId)?.phone || '+91 94401 56789',
-      category,
-      subcategory: subcategory || 'Standard Service',
-      description,
+      providerPhone: providerUser?.phone || '+91 8647 254999',
+      category: category.trim().slice(0, 100),
+      subcategory: subcategory ? subcategory.trim().slice(0, 100) : 'Standard Service',
+      description: description.trim().slice(0, 500),
       scheduledDate: scheduledDate || new Date().toISOString().split('T')[0],
       scheduledTime: scheduledTime || 'Today Evening (5:00 PM)',
       status: 'REQUESTED',
-      startOtp: generateDoorstepOtp(),
+      startOtp: secureStartOtp,
+      startOtpAttempts: 0,
       statusHistory: [
         {
           status: 'REQUESTED',
           timestamp: new Date().toISOString(),
-          note: `Booking requested by ${customerUser.name} via FixNear`,
+          note: `Booking requested by customer via FixNear`,
           updatedByRole: 'CUSTOMER',
         },
       ],
@@ -137,7 +184,11 @@ export async function POST(request: Request) {
       action: 'BOOKING_CREATED',
       targetEntity: 'BOOKING',
       targetId: newBooking.id,
-      details: { providerId: provider.id, category, amount: estAmount },
+      details: {
+        providerId: provider.id,
+        category: newBooking.category,
+        visitingCharge,
+      },
       timestamp: new Date().toISOString(),
     });
 
@@ -151,223 +202,212 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const session = await getAuthSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized: Authentication required.' }, { status: 401 });
+    }
+
     const body = await request.json();
     const {
       bookingId,
       status: targetStatus,
-      actorRole = session?.role || 'PROVIDER',
       note,
-      finalAmount,
       priceMatchedAmount,
-      paymentMethod,
       cancellationReason,
       isCollusion,
       startOtpInput,
     } = body;
+
+    if (!bookingId) {
+      return NextResponse.json({ error: 'bookingId is required' }, { status: 400 });
+    }
 
     const booking = db.getBookingById(bookingId);
     if (!booking) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
-    // 1. Handling On-Platform Price Matching (Anti-Circumvention feature)
-    if (priceMatchedAmount && priceMatchedAmount > 0) {
-      booking.priceMatchedAmount = priceMatchedAmount;
-      booking.pricing.finalAmount = priceMatchedAmount;
-      const commission = (priceMatchedAmount * booking.pricing.platformCommissionPercent) / 100;
+    // 1. Strict Ownership / Authorization Verification
+    const isCustomer = session.userId === booking.customerId;
+    let isAssignedProvider = false;
+    const provider = db.getProviderById(booking.providerId);
+    if (provider && provider.userId === session.userId) {
+      isAssignedProvider = true;
+    }
+    const isAdmin = session.role === 'ADMIN' || session.role === 'SUPPORT';
+
+    if (!isCustomer && !isAssignedProvider && !isAdmin) {
+      return NextResponse.json(
+        { error: 'Forbidden: You are not authorized to modify this booking.' },
+        { status: 403 }
+      );
+    }
+
+    // Never trust client-supplied actorRole; use verified session role
+    const effectiveRole = session.role;
+
+    // 2. Safe Price Matching (Anti-Circumvention Protection)
+    if (priceMatchedAmount !== undefined) {
+      if (!isCustomer && !isAdmin) {
+        return NextResponse.json(
+          { error: 'Only the customer or administrator can confirm price matching.' },
+          { status: 403 }
+        );
+      }
+
+      const matchedNum = Number(priceMatchedAmount);
+      // Validate bounds: Must be a positive reasonable number, not lower than minimum visit charge
+      const minAllowable = Math.max(booking.pricing.visitingCharges * 0.5, 99);
+      if (isNaN(matchedNum) || matchedNum < minAllowable || matchedNum > 50000) {
+        return NextResponse.json(
+          { error: `Invalid price matched amount. Must be between ₹${minAllowable} and ₹50,000.` },
+          { status: 400 }
+        );
+      }
+
+      booking.priceMatchedAmount = matchedNum;
+      booking.pricing.finalAmount = matchedNum;
+      const commission = Math.round(((matchedNum * booking.pricing.platformCommissionPercent) / 100) * 100) / 100;
       booking.pricing.platformCommissionAmount = commission;
-      booking.pricing.providerPayoutAmount = priceMatchedAmount - commission;
+      booking.pricing.providerPayoutAmount = Math.round((matchedNum - commission) * 100) / 100;
       booking.updatedAt = new Date().toISOString();
       booking.statusHistory.push({
         status: booking.status,
         timestamp: new Date().toISOString(),
-        note: `Price matched to ₹${priceMatchedAmount} (Worker offline quote matched on app under FixNear Protection)`,
+        note: `Price matched to ₹${matchedNum} (Offline worker quote verified on FixNear)`,
         updatedByRole: 'CUSTOMER',
       });
       db.saveBooking(booking);
 
       db.addAuditLog({
         id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        actorId: session?.userId || booking.customerId,
-        actorRole: 'CUSTOMER',
+        actorId: session.userId,
+        actorRole: effectiveRole,
         action: 'PRICE_MATCHED_ON_PLATFORM',
         targetEntity: 'BOOKING',
         targetId: booking.id,
-        details: { matchedAmount: priceMatchedAmount },
+        details: { matchedAmount: matchedNum },
         timestamp: new Date().toISOString(),
       });
 
       return NextResponse.json({ success: true, booking, message: 'Price matched successfully on app' });
     }
 
-    // 2. Doorstep Start-OTP validation before transitioning to IN_PROGRESS
-    const startOtpValue = startOtpInput || body.startOtp;
-    if (targetStatus === 'IN_PROGRESS' && booking.status !== 'IN_PROGRESS') {
-      if (booking.startOtp && (!startOtpValue || String(startOtpValue).trim() !== String(booking.startOtp).trim())) {
-        return NextResponse.json(
-          { error: 'Invalid Doorstep Start-OTP. Please ask customer for the 4-digit code shown on their screen.' },
-          { status: 400 }
-        );
-      }
+    // 3. Status Transition Verification
+    if (!targetStatus) {
+      return NextResponse.json({ error: 'Target status is required' }, { status: 400 });
     }
 
-    // 3. State machine transition check
-    const check = canTransitionBooking(booking.status, targetStatus as BookingStatus, actorRole as UserRole);
+    // Validate state machine transitions
+    const check = canTransitionBooking(booking.status, targetStatus as BookingStatus, effectiveRole);
     if (!check.allowed) {
       return NextResponse.json({ error: check.reason }, { status: 400 });
     }
 
+    // 4. Cryptographic Doorstep Start-OTP Validation (when starting active work)
+    if (targetStatus === 'IN_PROGRESS' && booking.status !== 'IN_PROGRESS') {
+      if (!isAssignedProvider && !isAdmin) {
+        return NextResponse.json(
+          { error: 'Only the assigned provider or admin can start work with the Doorstep OTP.' },
+          { status: 403 }
+        );
+      }
+
+      // Check brute force attempts on OTP (max 3 failed attempts)
+      if ((booking.startOtpAttempts || 0) >= 3) {
+        return NextResponse.json(
+          { error: 'Maximum OTP verification attempts exceeded. Please contact FixNear Support.' },
+          { status: 429 }
+        );
+      }
+
+      const inputCode = String(startOtpInput || body.startOtp || '').trim();
+      if (!booking.startOtp || inputCode !== String(booking.startOtp).trim()) {
+        booking.startOtpAttempts = (booking.startOtpAttempts || 0) + 1;
+        db.saveBooking(booking);
+
+        db.addAuditLog({
+          id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          actorId: session.userId,
+          actorRole: effectiveRole,
+          action: 'OTP_FAILED',
+          targetEntity: 'BOOKING',
+          targetId: booking.id,
+          details: { attempt: booking.startOtpAttempts },
+          timestamp: new Date().toISOString(),
+        });
+
+        return NextResponse.json(
+          {
+            error: `Invalid Doorstep Start-OTP. Please ask customer for the 4-digit code shown on their screen. (${3 - booking.startOtpAttempts} attempts remaining)`,
+          },
+          { status: 400 }
+        );
+      }
+
+      // OTP verified successfully
+      booking.otpVerifiedAt = new Date().toISOString();
+      delete booking.startOtp; // Invalidate OTP after successful doorstep verification
+
+      db.addAuditLog({
+        id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        actorId: session.userId,
+        actorRole: effectiveRole,
+        action: 'OTP_VERIFIED',
+        targetEntity: 'BOOKING',
+        targetId: booking.id,
+        details: { verifiedAt: booking.otpVerifiedAt },
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // 5. Apply Status Transition
     booking.status = targetStatus as BookingStatus;
     booking.updatedAt = new Date().toISOString();
 
-    // 4. Anti-Circumvention Fraud & Collusion Strike Recording
-    if (targetStatus === 'CANCELLED') {
-      booking.cancellationReason = cancellationReason || note || 'Cancelled by user';
-      if (isCollusion) {
-        booking.cancellationFlaggedCollusion = true;
-        // Penalize the provider for prompting off-platform cash collusion
-        const provider = db.getProviderById(booking.providerId);
-        if (provider) {
-          provider.circumventionStrikes = (provider.circumventionStrikes || 0) + 1;
-          provider.circumventionRiskScore = Math.min(100, (provider.circumventionRiskScore || 0) + 25);
-          provider.metrics.cancellationRate = Math.min(100, provider.metrics.cancellationRate + 10);
-          db.saveProvider(provider);
-
-          db.addAuditLog({
-            id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-            actorId: session?.userId || booking.customerId,
-            actorRole: 'CUSTOMER',
-            action: 'PROVIDER_COLLUSION_SUSPECTED',
-            targetEntity: 'PROVIDER',
-            targetId: provider.id,
-            details: {
-              bookingId: booking.id,
-              reason: cancellationReason,
-              totalStrikes: provider.circumventionStrikes,
-              riskScore: provider.circumventionRiskScore,
-            },
-            timestamp: new Date().toISOString(),
-          });
-        }
-      }
+    if (cancellationReason) {
+      booking.cancellationReason = String(cancellationReason).slice(0, 300);
+    }
+    if (isCollusion && provider) {
+      booking.cancellationFlaggedCollusion = true;
+      provider.circumventionStrikes = (provider.circumventionStrikes || 0) + 1;
+      provider.circumventionRiskScore = Math.min((provider.circumventionRiskScore || 0) + 30, 100);
+      db.saveProvider(provider);
     }
 
     booking.statusHistory.push({
       status: targetStatus as BookingStatus,
       timestamp: new Date().toISOString(),
-      note: note || `Status updated to ${targetStatus}`,
-      updatedByRole: actorRole as UserRole,
+      note: note ? String(note).slice(0, 300) : `Status updated to ${targetStatus} by ${effectiveRole}`,
+      updatedByRole: effectiveRole,
     });
-
-    if (finalAmount && finalAmount > 0) {
-      booking.pricing.finalAmount = finalAmount;
-      const commission = (finalAmount * booking.pricing.platformCommissionPercent) / 100;
-      booking.pricing.platformCommissionAmount = commission;
-      booking.pricing.providerPayoutAmount = finalAmount - commission;
-    }
-
-    if (targetStatus === 'PAID') {
-      const amountPaid = booking.pricing.finalAmount || booking.pricing.estimatedAmount;
-      booking.payment = {
-        paymentId: `pay-${Date.now()}`,
-        method: paymentMethod || 'UPI',
-        status: 'SUCCESS',
-        transactionRef: `UPI/${Math.floor(100000000 + Math.random() * 900000000)}/FIXNEAR`,
-        paidAt: new Date().toISOString(),
-      };
-    }
-
-    if (targetStatus === 'COMPLETED') {
-      const provider = db.getProviderById(booking.providerId);
-      if (provider) {
-        provider.metrics.completedJobs += 1;
-        db.saveProvider(provider);
-      }
-    }
 
     db.saveBooking(booking);
 
+    // Audit log
     db.addAuditLog({
       id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      actorId: session?.userId || (actorRole === 'PROVIDER' ? booking.providerId : booking.customerId),
-      actorRole: actorRole as UserRole,
+      actorId: session.userId,
+      actorRole: effectiveRole,
       action: `BOOKING_STATUS_${targetStatus}`,
       targetEntity: 'BOOKING',
       targetId: booking.id,
-      details: { newStatus: targetStatus, note, isCollusion },
+      details: { previousStatus: booking.status, newStatus: targetStatus },
       timestamp: new Date().toISOString(),
     });
 
-    return NextResponse.json({ success: true, booking });
+    // Sanitize response: do NOT return startOtp to provider
+    const responseBooking = { ...booking };
+    if (!isCustomer) {
+      delete responseBooking.startOtp;
+    }
+
+    return NextResponse.json({
+      success: true,
+      booking: responseBooking,
+      message: `Booking status updated to ${targetStatus}`,
+    });
   } catch (error) {
     console.error('Error in PATCH /api/bookings:', error);
-    return NextResponse.json({ error: 'Failed to update booking status' }, { status: 500 });
-  }
-}
-
-// Review submission
-export async function PUT(request: Request) {
-  try {
-    const session = await getAuthSession();
-    const body = await request.json();
-    const {
-      bookingId,
-      customerId = session?.userId || 'usr-cust-1',
-      rating,
-      qualityRating,
-      professionalismRating,
-      valueRating,
-      comment,
-    } = body;
-
-    const booking = db.getBookingById(bookingId);
-    if (!booking) {
-      return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
-    }
-
-    if (booking.status !== 'COMPLETED') {
-      return NextResponse.json(
-        { error: 'Reviews can only be submitted for COMPLETED bookings' },
-        { status: 400 }
-      );
-    }
-
-    const existing = db.getReviews().find((r) => r.bookingId === bookingId);
-    if (existing) {
-      return NextResponse.json(
-        { error: 'Review has already been submitted for this booking' },
-        { status: 409 }
-      );
-    }
-
-    const review: Review = {
-      id: `rev-${Date.now()}`,
-      bookingId,
-      customerId,
-      customerName: session?.name || booking.customerName,
-      providerId: booking.providerId,
-      rating: Number(rating) || 5,
-      qualityRating: Number(qualityRating) || 5,
-      professionalismRating: Number(professionalismRating) || 5,
-      valueRating: Number(valueRating) || 5,
-      comment: comment || 'Service completed satisfactorily.',
-      createdAt: new Date().toISOString(),
-    };
-
-    db.saveReview(review);
-
-    const provider = db.getProviderById(booking.providerId);
-    if (provider) {
-      const allReviews = db.getReviewsForProvider(provider.id);
-      const totalScore = allReviews.reduce((sum, r) => sum + r.rating, 0);
-      provider.metrics.totalReviews = allReviews.length;
-      provider.metrics.rating = Math.round((totalScore / allReviews.length) * 10) / 10;
-      db.saveProvider(provider);
-    }
-
-    return NextResponse.json({ success: true, review });
-  } catch (error) {
-    console.error('Error in PUT /api/bookings (Review):', error);
-    return NextResponse.json({ error: 'Failed to submit review' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to update booking' }, { status: 500 });
   }
 }

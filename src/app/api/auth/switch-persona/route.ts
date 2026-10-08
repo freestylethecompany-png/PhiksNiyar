@@ -5,12 +5,12 @@ import { createSessionToken } from '@/lib/auth/session';
 export async function POST(request: Request) {
   try {
     const isProduction = process.env.NODE_ENV === 'production';
-    const allowDemoPersonas = process.env.ALLOW_DEMO_PERSONAS === 'true';
+    const allowDemo = process.env.ALLOW_DEMO_PERSONAS === 'true' && !isProduction;
 
-    // In production, prevent unauthorized demo persona switching
-    if (isProduction && !allowDemoPersonas) {
+    // In production, unconditionally disable persona switching to prevent privilege escalation
+    if (isProduction || !allowDemo) {
       return NextResponse.json(
-        { error: 'Demo persona switching is disabled in production. Please log in via phone OTP.' },
+        { error: 'Forbidden: Demo persona switching is permanently disabled in production. Please log in via phone verification.' },
         { status: 403 }
       );
     }

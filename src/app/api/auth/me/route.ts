@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/database';
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'fixnear-super-secret-key-chilakaluripet-2026-production';
+import { getJwtSecret } from '@/lib/auth/session';
 
 export async function GET(request: Request) {
   try {
@@ -15,7 +14,8 @@ export async function GET(request: Request) {
     }
 
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as any;
+      const secret = getJwtSecret();
+      const decoded = jwt.verify(token, secret) as any;
       const user = db.getUserById(decoded.userId);
       if (!user) {
         return NextResponse.json({ authenticated: false, user: null });

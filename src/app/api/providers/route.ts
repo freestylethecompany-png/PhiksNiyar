@@ -2,6 +2,36 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/database';
 import { rankProvidersForRequest } from '@/lib/ai/matchEngine';
 import { CHILAKALURIPET_AREAS } from '@/lib/constants/locations';
+import { ProviderProfile } from '@/lib/db/types';
+
+// Strips sensitive internal risk scores and private contact details from public listings
+function sanitizePublicProvider(p: ProviderProfile) {
+  const user = db.getUserById(p.userId);
+  return {
+    id: p.id,
+    businessName: p.businessName,
+    primaryCategory: p.primaryCategory,
+    categories: p.categories,
+    subcategories: p.subcategories,
+    experienceYears: p.experienceYears,
+    bio: p.bio,
+    serviceRadiusKm: p.serviceRadiusKm,
+    locationArea: p.locationArea,
+    latitude: p.latitude,
+    longitude: p.longitude,
+    verificationStatus: p.verificationStatus,
+    workingHours: p.workingHours,
+    pricingModel: p.pricingModel,
+    metrics: p.metrics,
+    portfolioImages: p.portfolioImages || [],
+    user: user
+      ? {
+          name: user.name,
+          avatarUrl: user.avatarUrl,
+        }
+      : null,
+  };
+}
 
 export async function GET(request: Request) {
   try {
@@ -28,21 +58,29 @@ export async function GET(request: Request) {
         targetBudget,
       });
 
+      // Sanitize provider representations
+      const sanitizedMatches = rankedMatches.map((m) => ({
+        ...m,
+        provider: sanitizePublicProvider(m.provider),
+        user: {
+          name: m.user.name,
+          avatarUrl: m.user.avatarUrl,
+        },
+      }));
+
       return NextResponse.json({
         success: true,
-        count: rankedMatches.length,
+        count: sanitizedMatches.length,
         area: selectedArea,
-        matches: rankedMatches,
+        matches: sanitizedMatches,
       });
     }
 
-    // Default: list all active providers with basic details
+    // Default: list active providers with sanitized public details
     const allProviders = db.getProviders().map((p) => {
-      const user = db.getUserById(p.userId);
       const reviews = db.getReviewsForProvider(p.id);
       return {
-        ...p,
-        user,
+        ...sanitizePublicProvider(p),
         reviews,
       };
     });

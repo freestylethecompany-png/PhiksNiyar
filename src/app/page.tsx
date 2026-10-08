@@ -112,7 +112,7 @@ export default function HomePage() {
         setCurrentUser(data.user);
         setCurrentRole(data.user.role);
         if (data.user.role === 'CUSTOMER') {
-          await loadCustomerBookings(data.user.id);
+          await loadCustomerBookings();
         }
       } else {
         setCurrentUser(null);
@@ -140,7 +140,7 @@ export default function HomePage() {
         setShowPersonaModal(false);
         if (notify) showToast(`Authenticated as ${data.user.name} (${data.user.role})`);
         if (data.user.role === 'CUSTOMER') {
-          await loadCustomerBookings(data.user.id);
+          await loadCustomerBookings();
         }
       }
     } catch (e) {
@@ -200,17 +200,21 @@ export default function HomePage() {
     }
   };
 
-  // Fetch initial customer bookings
-  const loadCustomerBookings = async (userId?: string) => {
+  // Fetch customer bookings for authenticated session
+  const loadCustomerBookings = async () => {
     try {
-      const targetId = userId || currentUser?.id || 'usr-cust-1';
-      const res = await fetch(`/api/bookings?role=CUSTOMER&userId=${targetId}`);
-      const json = await res.json();
-      if (json.bookings) {
-        setCustomerBookings(json.bookings);
+      const res = await fetch('/api/bookings');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.bookings) {
+          setCustomerBookings(json.bookings);
+        }
+      } else {
+        setCustomerBookings([]);
       }
     } catch (e) {
       console.error(e);
+      setCustomerBookings([]);
     }
   };
 

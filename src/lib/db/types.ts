@@ -1,8 +1,14 @@
 // LOCALAI Database Types & Interfaces
 
-export type UserRole = 'CUSTOMER' | 'PROVIDER' | 'ADMIN';
+export type UserRole = 'CUSTOMER' | 'PROVIDER' | 'SUPPORT' | 'ADMIN';
 
-export type VerificationStatus = 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED' | 'SUSPENDED';
+export type VerificationStatus =
+  | 'PENDING'
+  | 'DOCUMENT_SUBMITTED'
+  | 'KYC_PROCESSING'
+  | 'VERIFIED'
+  | 'REJECTED'
+  | 'SUSPENDED';
 
 export type BookingStatus =
   | 'REQUESTED'
@@ -108,16 +114,21 @@ export interface ProviderProfile {
   latitude: number;
   longitude: number;
   verificationStatus: VerificationStatus;
-  aadhaarVerified?: boolean;
-  aadhaarVerifiedAt?: string;
-  aadhaarHash?: string;
+  verificationProvider?: string;
+  providerReferenceId?: string;
+  verificationTimestamp?: string;
+  maskedIdentityReference?: string;
   placeVerified?: boolean;
   placeVerifiedAt?: string;
   workshopGpsVerified?: boolean;
+  aadhaarVerified?: boolean;
+  aadhaarVerifiedAt?: string;
+  aadhaarHash?: string;
   circumventionRiskScore?: number; // 0 (clean) to 100 (high risk of cash collusion)
   circumventionStrikes?: number;   // Count of cancellations after arrival
   verificationDocuments: {
-    aadhaarUploaded: boolean;
+    idDocumentUploaded?: boolean;
+    aadhaarUploaded?: boolean;
     tradeLicenseUploaded?: boolean;
     certificateUploaded?: boolean;
     idNumberMasked?: string;
@@ -204,7 +215,10 @@ export interface Booking {
   scheduledDate: string;
   scheduledTime: string;
   status: BookingStatus;
-  startOtp?: string; // 4-digit doorstep verification code
+  startOtp?: string; // 4-digit doorstep verification code (masked for providers)
+  startOtpAttempts?: number; // Failed attempt tracking
+  startOtpLockedUntil?: string; // Brute force lock
+  otpVerifiedAt?: string; // Timestamp of doorstep verification
   cancellationReason?: string;
   cancellationFlaggedCollusion?: boolean;
   priceMatchedAmount?: number;

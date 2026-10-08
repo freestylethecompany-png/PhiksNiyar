@@ -10,30 +10,29 @@ export async function GET(
     const { orderId } = await params;
     const session = await getAuthSession();
 
-    let order = db.getDeliveryTracking(orderId);
-    if (!order) {
-      // If order not found, check if it's the default seeded order
-      db.seedDeliveriesIfEmpty();
-      order = db.getDeliveryTracking(orderId);
+    // 1. Mandatory Authentication (BOLA / IDOR Prevention)
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Authentication required to access delivery tracking.' },
+        { status: 401 }
+      );
     }
 
+    const order = db.getDeliveryTracking(orderId);
     if (!order) {
       return NextResponse.json({ error: 'Delivery order not found' }, { status: 404 });
     }
 
-    // Security Check: If a session is active, verify that user has authorization
-    // (Customer, assigned Partner, or Admin)
-    if (session) {
-      const isCustomer = session.userId === order.customer.id;
-      const isPartner = session.userId === order.partner.id;
-      const isAdmin = session.role === 'ADMIN';
+    // 2. Strict Authorization Check
+    const isCustomer = session.userId === order.customer.id;
+    const isPartner = session.userId === order.partner.id;
+    const isAdmin = session.role === 'ADMIN' || session.role === 'SUPPORT';
 
-      if (!isCustomer && !isPartner && !isAdmin) {
-        return NextResponse.json(
-          { error: 'Unauthorized: You can only track your own active deliveries.' },
-          { status: 403 }
-        );
-      }
+    if (!isCustomer && !isPartner && !isAdmin) {
+      return NextResponse.json(
+        { error: 'Forbidden: You can only view active deliveries assigned to your account.' },
+        { status: 403 }
+      );
     }
 
     return NextResponse.json({

@@ -1,8 +1,23 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/database';
+import { checkRateLimit, getClientIp } from '@/lib/security/rateLimiter';
+import { generateSecurePhoneOtp } from '@/lib/security/cryptoUtils';
 
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIp(request);
+
+    // 1. IP-level rate limiting (max 15 requests per 15 mins per IP)
+    const ipCheck = checkRateLimit(`otp-send-ip:${clientIp}`, 15, 15 * 60 * 1000);
+    if (!ipCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: `Too many requests from this network. Please wait ${ipCheck.retryAfterSeconds} seconds before retrying.`,
+        },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     let { phone } = body;
 
@@ -32,18 +47,27 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate cryptographically sound 6-digit OTP
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    // 2. Phone-level rate limiting (max 3 OTP requests per 10 minutes per phone)
+    const phoneCheck = checkRateLimit(`otp-send-phone:${phone}`, 3, 10 * 60 * 1000, 15 * 60 * 1000);
+    if (!phoneCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: `Too many OTP requests for this number. Please wait ${phoneCheck.retryAfterSeconds} seconds before requesting another code.`,
+        },
+        { status: 429 }
+      );
+    }
 
-    // Persist OTP in persistent database with 10-minute expiry
+    // Generate cryptographically sound 6-digit OTP
+    const code = generateSecurePhoneOtp();
+
+    // Persist OTP in database with 10-minute expiry
     db.saveOtp(phone, code, 10);
 
     const isProduction = process.env.NODE_ENV === 'production';
-    console.log(`[FIXNEAR OTP GATEWAY] Dispatching 6-digit verification code to ${phone}`);
-
     let smsSent = false;
 
-    // 1. Production SMS Gateway: Fast2SMS (popular in India with DLT / Quick OTP route)
+    // 1. Production SMS Gateway: Fast2SMS
     const fast2SmsKey = process.env.FAST2SMS_API_KEY;
     if (fast2SmsKey) {
       try {
@@ -52,10 +76,9 @@ export async function POST(request: Request) {
         );
         if (smsRes.ok) {
           smsSent = true;
-          console.log(`[FAST2SMS] OTP successfully dispatched to ${phone}`);
         }
       } catch (err) {
-        console.warn('Fast2SMS gateway dispatch error:', err);
+        console.warn('Fast2SMS gateway error:', err);
       }
     }
 
@@ -69,7 +92,7 @@ export async function POST(request: Request) {
         const params = new URLSearchParams();
         params.append('To', phone);
         params.append('From', twilioPhone);
-        params.append('Body', `Your FixNear verification code is ${code}. Valid for 10 minutes. Do not share with anyone.`);
+        params.append('Body', `Your FixNear verification code is ${code}. Valid for 10 minutes.`);
 
         const twilioRes = await fetch(
           `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`,
@@ -84,22 +107,20 @@ export async function POST(request: Request) {
         );
         if (twilioRes.ok) {
           smsSent = true;
-          console.log(`[TWILIO] OTP successfully dispatched to ${phone}`);
         }
       } catch (err) {
-        console.warn('Twilio SMS gateway dispatch error:', err);
+        console.warn('Twilio SMS gateway error:', err);
       }
     }
 
-    // In production, NEVER expose devOtp in the JSON response
     const responsePayload: Record<string, any> = {
       success: true,
       message: `OTP sent successfully to ${phone}`,
       phone,
     };
 
-    if (!isProduction) {
-      // In development / local testing, include devOtp for test suites
+    // In development mode only (when explicitly not production and SMS gateways not set)
+    if (!isProduction && !fast2SmsKey && !twilioSid) {
       responsePayload.devOtp = code;
     }
 
