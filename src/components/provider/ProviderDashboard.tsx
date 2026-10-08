@@ -50,7 +50,7 @@ export default function ProviderDashboard({
   const [chatMessages, setChatMessages] = useState<Array<{ sender: 'user' | 'assistant'; text: string }>>([
     {
       sender: 'assistant',
-      text: 'Namaskaram! I am your FixNear Provider Assistant. Ask me about your jobs today, route navigation in Chilakaluripet, or your daily earnings.',
+      text: 'Namaskaram! I am your Sevanta Provider Assistant. Ask me about your jobs today, route navigation in Chilakaluripet, or your daily earnings.',
     },
   ]);
 
@@ -476,7 +476,7 @@ export default function ProviderDashboard({
                 {activeJobs.map((job) => {
                   const waPhone = job.customerPhone.replace(/\D/g, '');
                   const waText = encodeURIComponent(
-                    `Hello ${job.customerName}! I am ${provider.businessName} regarding your FixNear booking #${job.id} for ${job.category}.`
+                    `Hello ${job.customerName}! I am ${provider.businessName} regarding your Sevanta booking #${job.id} for ${job.category}.`
                   );
                   const whatsAppUrl = `https://wa.me/${waPhone}?text=${waText}`;
 

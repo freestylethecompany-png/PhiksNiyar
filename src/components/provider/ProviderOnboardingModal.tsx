@@ -446,7 +446,7 @@ export default function ProviderOnboardingModal({ onSuccess, onClose }: Provider
                   }}
                 >
                   <p>
-                    * FixNear operates on a transparent <strong>10% platform commission</strong> model. For every ₹1,000 billed, you take home ₹900 net payout.
+                    * Sevanta operates on a transparent <strong>10% platform commission</strong> model. For every ₹1,000 billed, you take home ₹900 net payout.
                   </p>
                 </div>
               </div>
@@ -459,7 +459,7 @@ export default function ProviderOnboardingModal({ onSuccess, onClose }: Provider
                   5. Government ID & Trade Credentials Submission
                 </h4>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                  Provide your 12-digit government identity reference and trade details for verification by the FixNear onboarding compliance team.
+                  Provide your 12-digit government identity reference and trade details for verification by the Sevanta onboarding compliance team.
                 </p>
 
                 <div className="form-group">
@@ -520,7 +520,7 @@ export default function ProviderOnboardingModal({ onSuccess, onClose }: Provider
                       DPDP Act Privacy Compliance Notice
                     </div>
                     <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
-                      Your ID reference is masked ({maskAadhaarNumber(aadhaarNumber || '123456789012')}) and never stored in raw plaintext or exposed to consumers. Official verification will be processed by the FixNear verification team before granting the Verified badge.
+                      Your ID reference is masked ({maskAadhaarNumber(aadhaarNumber || '123456789012')}) and never stored in raw plaintext or exposed to consumers. Official verification will be processed by the Sevanta verification team before granting the Verified badge.
                     </div>
                   </div>
                 </div>
@@ -542,7 +542,7 @@ export default function ProviderOnboardingModal({ onSuccess, onClose }: Provider
                     style={{ marginTop: '3px', accentColor: 'var(--primary)' }}
                   />
                   <label htmlFor="terms-check" style={{ color: 'var(--text-secondary)' }}>
-                    I certify that I am a bona fide tradesperson operating in Chilakaluripet, AP, and agree to FixNear (ఫిక్స్‌నియర్)&apos;s service standards, transparent pricing, and anti-circumvention platform terms.
+                    I certify that I am a bona fide tradesperson operating in Chilakaluripet, AP, and agree to Sevanta (సేవంత)&apos;s service standards, transparent pricing, and anti-circumvention platform terms.
                   </label>
                 </div>
               </div>

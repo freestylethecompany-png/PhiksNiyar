@@ -104,7 +104,7 @@ export async function fetchRoadRoute(
 
   try {
     const res = await fetch(url, {
-      headers: { 'User-Agent': 'FixNear-InteractiveMap/1.0' },
+      headers: { 'User-Agent': 'Sevanta-InteractiveMap/1.0' },
       next: { revalidate: 60 },
     });
 

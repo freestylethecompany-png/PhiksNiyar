@@ -6,7 +6,7 @@ import { getJwtSecret } from '@/lib/auth/session';
 export async function GET(request: Request) {
   try {
     const cookieHeader = request.headers.get('cookie') || '';
-    const match = cookieHeader.match(/(?:fixnear_session|localai_session)=([^;]+)/);
+    const match = cookieHeader.match(/(?:sevanta_session|fixnear_session|localai_session)=([^;]+)/);
     const token = match ? match[1] : null;
 
     if (!token) {

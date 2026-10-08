@@ -159,7 +159,7 @@ export async function POST(request: Request) {
         {
           status: 'REQUESTED',
           timestamp: new Date().toISOString(),
-          note: `Booking requested by customer via FixNear`,
+          note: `Booking requested by customer via Sevanta`,
           updatedByRole: 'CUSTOMER',
         },
       ],
@@ -273,7 +273,7 @@ export async function PATCH(request: Request) {
       booking.statusHistory.push({
         status: booking.status,
         timestamp: new Date().toISOString(),
-        note: `Price matched to ₹${matchedNum} (Offline worker quote verified on FixNear)`,
+        note: `Price matched to ₹${matchedNum} (Offline worker quote verified on Sevanta)`,
         updatedByRole: 'CUSTOMER',
       });
       db.saveBooking(booking);
@@ -315,7 +315,7 @@ export async function PATCH(request: Request) {
       // Check brute force attempts on OTP (max 3 failed attempts)
       if ((booking.startOtpAttempts || 0) >= 3) {
         return NextResponse.json(
-          { error: 'Maximum OTP verification attempts exceeded. Please contact FixNear Support.' },
+          { error: 'Maximum OTP verification attempts exceeded. Please contact Sevanta Support.' },
           { status: 429 }
         );
       }

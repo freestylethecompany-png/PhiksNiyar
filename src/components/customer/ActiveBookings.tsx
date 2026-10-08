@@ -200,7 +200,7 @@ export default function ActiveBookings({
           // WhatsApp Deep link
           const waPhone = booking.providerPhone.replace(/\D/g, '');
           const waText = encodeURIComponent(
-            `Hello ${booking.providerName}! Regarding FixNear Booking #${booking.id} (${booking.category} in ${booking.customerAddress.areaName}): `
+            `Hello ${booking.providerName}! Regarding Sevanta Booking #${booking.id} (${booking.category} in ${booking.customerAddress.areaName}): `
           );
           const whatsAppUrl = `https://wa.me/${waPhone}?text=${waText}`;
 

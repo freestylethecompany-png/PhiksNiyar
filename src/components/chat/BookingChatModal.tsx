@@ -77,7 +77,7 @@ export default function BookingChatModal({
       : booking.customerPhone.replace(/\D/g, '');
 
   const waText = encodeURIComponent(
-    `Hello! Regarding FixNear Booking #${booking.id} (${booking.category} at ${booking.customerAddress.areaName}, Chilakaluripet): `
+    `Hello! Regarding Sevanta Booking #${booking.id} (${booking.category} at ${booking.customerAddress.areaName}, Chilakaluripet): `
   );
   const whatsAppUrl = `https://wa.me/${targetPhone}?text=${waText}`;
 

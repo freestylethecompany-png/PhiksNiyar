@@ -279,7 +279,7 @@ export async function understandServiceRequest(rawText: string): Promise<AIUnder
               {
                 parts: [
                   {
-                    text: `You are an AI assistant for FixNear (ఫిక్స్‌నియర్), a local service marketplace in Chilakaluripet, Andhra Pradesh.
+                    text: `You are an AI assistant for Sevanta (సేవంత), a local service marketplace in Chilakaluripet, Andhra Pradesh.
 Convert this user query (which might be in English, Telugu, or Romanized Telugu/Tanglish) into a JSON object strictly matching this schema:
 {
   "category": string (e.g. "AC Repair & Service", "Electrician", "Plumber", "Refrigerator Repair", "Washing Machine Repair", "Bike Mechanic", "Home Cleaning", "Carpenter"),

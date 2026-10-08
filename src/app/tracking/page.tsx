@@ -602,7 +602,7 @@ function TrackingPageContent() {
 
 export default function TrackingPage() {
   return (
-    <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center' }}>Loading FixNear Delivery Tracking...</div>}>
+    <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center' }}>Loading Sevanta Delivery Tracking...</div>}>
       <TrackingPageContent />
     </Suspense>
   );

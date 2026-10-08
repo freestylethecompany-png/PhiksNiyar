@@ -92,7 +92,7 @@ export async function POST(request: Request) {
         const params = new URLSearchParams();
         params.append('To', phone);
         params.append('From', twilioPhone);
-        params.append('Body', `Your FixNear verification code is ${code}. Valid for 10 minutes.`);
+        params.append('Body', `Your Sevanta verification code is ${code}. Valid for 10 minutes.`);
 
         const twilioRes = await fetch(
           `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`,

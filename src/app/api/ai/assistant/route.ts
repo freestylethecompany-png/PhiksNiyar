@@ -68,7 +68,7 @@ export async function POST(request: Request) {
       }
     } else if (q.includes('earn') || q.includes('money') || q.includes('revenue') || q.includes('week')) {
       const totalEarned = completedBookings.reduce((sum, b) => sum + b.pricing.providerPayoutAmount, 0);
-      reply = `Your net completed earnings today: ₹${todayEarnings}. Lifetime completed payout in FixNear: ₹${totalEarned.toLocaleString('en-IN')}. Platform commission deducted was 10%.`;
+      reply = `Your net completed earnings today: ₹${todayEarnings}. Lifetime completed payout in Sevanta: ₹${totalEarned.toLocaleString('en-IN')}. Platform commission deducted was 10%.`;
     } else if (q.includes('demand') || q.includes('most') || q.includes('requests') || q.includes('popular')) {
       reply = `Highest customer demand in Chilakaluripet:\n1. AC Repair & Gas Refill (Kalamandir & Pandaripuram)\n2. Electrician & MCB Tripping (Clock Tower Center)\n3. Water Motor Pump & Tap Leakage (Ganapavaram Road)`;
     } else {

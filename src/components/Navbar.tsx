@@ -131,20 +131,20 @@ export default function Navbar({
         <div className="brand-wrapper" onClick={onGoHome} role="button" tabIndex={0}>
           <div className="brand-logo-card">
             <img
-              src="/fixnear-logo.png"
-              alt="FixNear"
+              src="/sevanta-logo.png"
+              alt="Sevanta"
               style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             />
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
               <span className="brand-name">
-                <span style={{ color: 'var(--primary)' }}>Fix</span>
-                <span style={{ color: 'var(--secondary)' }}>Near</span>
+                <span style={{ color: 'var(--primary)' }}>Seva</span>
+                <span style={{ color: 'var(--secondary)' }}>nta</span>
               </span>
               {currentLang === 'te' && (
                 <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--secondary)' }}>
-                  (ఫిక్స్‌నియర్)
+                  (సేవంత)
                 </span>
               )}
               <span className="brand-badge">CHILAKALURIPET</span>

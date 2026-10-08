@@ -1,16 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  /* FixNear Brand Primary (Vibrant Tech Sapphire) */
-  --primary: #1d4ed8;
-  --primary-hover: #1e40af;
-  --primary-dark: #172554;
-  --primary-50: #eff6ff;
-  --primary-100: #dbeafe;
-  --primary-200: #bfdbfe;
-  --primary-glow: rgba(29, 78, 216, 0.16);
+  /* Sevanta Brand Primary (Vibrant Home Energy & Service Orange) */
+  --primary: #ea580c;
+  --primary-hover: #c2410c;
+  --primary-dark: #9a3412;
+  --primary-50: #fff7ed;
+  --primary-100: #ffedd5;
+  --primary-200: #fed7aa;
+  --primary-glow: rgba(234, 88, 12, 0.16);
 
-  /* FixNear Brand Secondary & Trust (Pure Tech Emerald) */
+  /* Sevanta Brand Secondary & Trust (Pure Verified Emerald) */
   --secondary: #059669;
   --secondary-hover: #047857;
   --secondary-dark: #064e3b;
@@ -19,10 +19,11 @@
   --secondary-200: #a7f3d0;
   --secondary-glow: rgba(5, 150, 105, 0.16);
 
-  /* Brand Signature Gradient */
-  --brand-gradient: linear-gradient(135deg, #1d4ed8 0%, #059669 100%);
-  --brand-blue: #1d4ed8;
+  /* Brand Signature Gradient (Orange to Emerald as in the Sevanta 'S' emblem) */
+  --brand-gradient: linear-gradient(135deg, #ea580c 0%, #059669 100%);
+  --brand-orange: #ea580c;
   --brand-green: #059669;
+  --brand-navy: #0f172a;
 
   /* Accent Saffron / Amber */
   --accent-saffron: #d97706;

@@ -46,7 +46,7 @@ export default function PersonaSwitcherModal({
     },
     {
       id: 'usr-admin-1',
-      name: 'FixNear Admin',
+      name: 'Sevanta Admin',
       role: 'ADMIN',
       phone: '+91 90000 00001',
       desc: 'Platform Administrator • Full Governance',

@@ -28,7 +28,10 @@ export interface AuthSessionPayload {
 export async function getAuthSession(): Promise<AuthSessionPayload | null> {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get('fixnear_session')?.value || cookieStore.get('localai_session')?.value;
+    const token =
+      cookieStore.get('sevanta_session')?.value ||
+      cookieStore.get('fixnear_session')?.value ||
+      cookieStore.get('localai_session')?.value;
     if (!token) return null;
 
     const secret = getJwtSecret();

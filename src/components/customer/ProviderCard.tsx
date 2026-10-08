@@ -291,8 +291,8 @@ export default function ProviderCard({
                 }}
               >
                 {currentLang === 'te'
-                  ? `ఫిక్స్‌నియర్ (FixNear) ఎలాంటి స్పాన్సర్డ్ లేదా చెల్లించిన స్థానాలను అనుమతించదు. ఈ స్కోర్ (${overallScore}%) చిలకలూరిపేటలో మా 10-ఫ్యాక్టర్ పారదర్శక అల్గారిథమ్ ద్వారా లెక్కించబడింది:`
-                  : `FixNear never sells sponsored listings. This score (${overallScore}%) is computed objectively using our 10-factor local matching algorithm:`}
+                  ? `సేవంత (Sevanta) ఎలాంటి స్పాన్సర్డ్ లేదా చెల్లించిన స్థానాలను అనుమతించదు. ఈ స్కోర్ (${overallScore}%) చిలకలూరిపేటలో మా 10-ఫ్యాక్టర్ పారదర్శక అల్గారిథమ్ ద్వారా లెక్కించబడింది:`
+                  : `Sevanta never sells sponsored listings. This score (${overallScore}%) is computed objectively using our 10-factor local matching algorithm:`}
               </p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
@@ -354,7 +354,7 @@ export default function ProviderCard({
                 >
                   <ShieldCheck size={18} color="var(--secondary)" style={{ flexShrink: 0 }} />
                   <span>
-                    Government ID & trade credentials verified by FixNear administrator (+5% trust bonus).
+                    Government ID & trade credentials verified by Sevanta administrator (+5% trust bonus).
                   </span>
                 </div>
               )}

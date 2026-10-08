@@ -35,8 +35,8 @@ export default function PaymentModal({
   const providerPayout = amount - platformFee;
 
   // Real UPI deep link spec
-  const upiVpa = 'fixnear.payments@okhdfcbank';
-  const upiUri = `upi://pay?pa=${upiVpa}&pn=FixNear%20Marketplace&am=${amount}&cu=INR&tn=Booking_${booking.id}`;
+  const upiVpa = 'sevanta.payments@okhdfcbank';
+  const upiUri = `upi://pay?pa=${upiVpa}&pn=Sevanta%20Marketplace&am=${amount}&cu=INR&tn=Booking_${booking.id}`;
 
   const handleProcessPayment = async () => {
     setIsProcessing(true);
@@ -69,14 +69,14 @@ export default function PaymentModal({
               key: orderData.keyId,
               amount: orderData.amount,
               currency: orderData.currency || 'INR',
-              name: 'FixNear Services',
+              name: 'Sevanta Services',
               description: `Booking #${booking.id} (${booking.category})`,
               order_id: orderData.orderId,
               prefill: {
                 name: booking.customerName,
                 contact: booking.customerPhone,
               },
-              theme: { color: '#0b3b95' },
+              theme: { color: '#ea580c' },
               handler: async function (response: any) {
                 // Verify signature on backend
                 const verifyRes = await fetch('/api/payments/razorpay/verify', {
@@ -438,7 +438,7 @@ export default function PaymentModal({
                 <strong>₹{providerPayout}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>FixNear Platform Commission (10%)</span>
+                <span>Sevanta Platform Commission (10%)</span>
                 <span>₹{platformFee}</span>
               </div>
             </div>

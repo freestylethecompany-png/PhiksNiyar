@@ -8,50 +8,51 @@ export const viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'FixNear — Local help. Right when you need it. | Chilakaluripet, Andhra Pradesh',
+  title: 'Sevanta (సేవంత) — Local help. Right when you need it. | Chilakaluripet, Andhra Pradesh',
   description:
-    'FixNear (ఫిక్స్‌నియర్) connects you with verified local AC technicians, electricians, plumbers, and mechanics near you in Chilakaluripet with instant AI matching, upfront pricing, and UPI payments.',
+    'Sevanta (సేవంత) connects you with verified local AC technicians, electricians, plumbers, and mechanics near you in Chilakaluripet with instant AI matching, upfront pricing, and UPI payments.',
   keywords: [
-    'FixNear',
-    'Fix Near',
-    'FixNear Chilakaluripet',
+    'Sevanta',
+    'Sevanta Chilakaluripet',
+    'సేవంత',
+    'సేవంత చిలకలూరిపేట',
     'Local help. Right when you need it.',
     'Chilakaluripet local services',
     'AC repair Chilakaluripet',
     'electrician Chilakaluripet',
     'plumber Chilakaluripet',
     'bike mechanic Chilakaluripet',
-    'ఫిక్స్‌నియర్ చిలకలూరిపేట',
+    'FixNear',
   ],
-  authors: [{ name: 'FixNear Technologies' }],
+  authors: [{ name: 'Sevanta Technologies' }],
   metadataBase: new URL('https://fixnear.in'),
   openGraph: {
-    title: 'FixNear — Local help. Right when you need it.',
+    title: 'Sevanta (సేవంత) — Local help. Right when you need it.',
     description:
-      'FixNear connects households with verified local AC technicians, electricians, plumbers, and mechanics in Chilakaluripet with instant AI matching and UPI payments.',
+      'Sevanta connects households with verified local AC technicians, electricians, plumbers, and mechanics in Chilakaluripet with instant AI matching and UPI payments.',
     url: 'https://fixnear.in',
-    siteName: 'FixNear',
+    siteName: 'Sevanta',
     locale: 'en_IN',
     type: 'website',
     images: [
       {
-        url: '/fixnear-logo.png',
+        url: '/sevanta-logo.png',
         width: 1024,
         height: 1024,
-        alt: 'FixNear — Local help. Right when you need it.',
+        alt: 'Sevanta — Local help. Right when you need it.',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'FixNear — Local help. Right when you need it.',
+    title: 'Sevanta (సేవంత) — Local help. Right when you need it.',
     description: 'AI-powered local services marketplace in Chilakaluripet, AP.',
-    images: ['/fixnear-logo.png'],
+    images: ['/sevanta-logo.png'],
   },
   icons: {
-    icon: '/fixnear-logo.png',
-    shortcut: '/fixnear-logo.png',
-    apple: '/fixnear-logo.png',
+    icon: '/sevanta-logo.png',
+    shortcut: '/sevanta-logo.png',
+    apple: '/sevanta-logo.png',
   },
 };
 
@@ -64,7 +65,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
-        <link rel="icon" href="/fixnear-logo.png" />
+        <link rel="icon" href="/sevanta-logo.png" />
       </head>
       <body suppressHydrationWarning>{children}</body>
     </html>

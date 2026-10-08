@@ -373,7 +373,7 @@ export default function HomePage() {
           bookingId,
           priceMatchedAmount: matchedAmount,
           actorRole: 'CUSTOMER',
-          note: `Customer price matched to ₹${matchedAmount} on app under FixNear Protection`,
+          note: `Customer price matched to ₹${matchedAmount} on app under Sevanta Protection`,
         }),
       });
       const json = await res.json();
@@ -381,7 +381,7 @@ export default function HomePage() {
         showToast(
           currentLang === 'te'
             ? `బిల్లు ₹${matchedAmount} కి మార్చబడింది! మీ 7 రోజుల ఉచిత వారంటీ యాక్టివ్‌గా ఉంది.`
-            : `Bill matched to ₹${matchedAmount}! FixNear 7-Day Warranty kept 100% active.`
+            : `Bill matched to ₹${matchedAmount}! Sevanta 7-Day Warranty kept 100% active.`
         );
         await loadCustomerBookings();
       } else {
@@ -1024,17 +1024,17 @@ export default function HomePage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                 <div className="brand-logo-card" style={{ width: '38px', height: '38px' }}>
                   <img
-                    src="/fixnear-logo.png"
-                    alt="FixNear"
+                    src="/sevanta-logo.png"
+                    alt="Sevanta"
                     style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                   />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontWeight: 800, fontSize: '1.25rem' }}>
                   <span>
-                    <span style={{ color: 'var(--primary)' }}>Fix</span>
-                    <span style={{ color: 'var(--secondary)' }}>Near</span>
+                    <span style={{ color: 'var(--primary)' }}>Seva</span>
+                    <span style={{ color: 'var(--secondary)' }}>nta</span>
                   </span>
-                  <span style={{ color: 'var(--secondary)', fontSize: '0.85rem' }}>(ఫిక్స్‌నియర్)</span>
+                  <span style={{ color: 'var(--secondary)', fontSize: '0.85rem' }}>(సేవంత)</span>
                   <span className="brand-badge">CHILAKALURIPET</span>
                 </div>
               </div>
@@ -1072,7 +1072,7 @@ export default function HomePage() {
             <div style={{ maxWidth: '650px', lineHeight: 1.4 }}>
               {t.complianceNotice}
             </div>
-            <div>© {new Date().getFullYear()} FixNear (ఫిక్స్‌నియర్) Technologies. All rights reserved.</div>
+            <div>© {new Date().getFullYear()} Sevanta (సేవంత) Technologies. All rights reserved.</div>
           </div>
         </div>
       </footer>

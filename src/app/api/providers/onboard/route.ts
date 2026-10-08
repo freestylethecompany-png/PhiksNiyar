@@ -210,7 +210,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Application submitted successfully! Your documents and trade details will be verified by the FixNear verification team before receiving the Verified badge.',
+      message: 'Application submitted successfully! Your documents and trade details will be verified by the Sevanta verification team before receiving the Verified badge.',
       provider: newProvider,
     });
   } catch (error) {

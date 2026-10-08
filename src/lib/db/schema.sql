@@ -313,7 +313,7 @@ CREATE TABLE IF NOT EXISTS platform_settings (
     "priceCompatibility": 0.10
   }'::jsonb,
   default_search_radius_km NUMERIC(5, 2) NOT NULL DEFAULT 15.00,
-  upi_vpa VARCHAR(100) NOT NULL DEFAULT 'fixnear.payments@okhdfcbank',
+  upi_vpa VARCHAR(100) NOT NULL DEFAULT 'sevanta.payments@okhdfcbank',
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

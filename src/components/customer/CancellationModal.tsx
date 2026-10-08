@@ -249,7 +249,7 @@ export default function CancellationModal({
                     <span>
                       {currentLang === 'te'
                         ? 'జాగ్రత్త: యాప్ బయట నగదు చెల్లిస్తే వారంటీ రద్దు అవుతుంది!'
-                        : 'WARNING: You LOSE 100% of FixNear Protection Offline!'}
+                        : 'WARNING: You LOSE 100% of Sevanta Protection Offline!'}
                     </span>
                   </div>
 
@@ -274,7 +274,7 @@ export default function CancellationModal({
                       <span>
                         {currentLang === 'te'
                           ? 'పరిష్కారం: వర్కర్ చెప్పిన ధరకే యాప్‌లోనే బిల్ చేయండి!'
-                          : 'FixNear Best Price Match: Pay Worker’s Quote ON-APP!'}
+                          : 'Sevanta Best Price Match: Pay Worker’s Quote ON-APP!'}
                       </span>
                     </div>
 

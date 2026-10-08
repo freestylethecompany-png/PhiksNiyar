@@ -16,7 +16,7 @@ export default function PrivacyPage() {
           marginBottom: '1.5rem',
         }}
       >
-        <ArrowLeft size={16} /> Back to FixNear Home
+        <ArrowLeft size={16} /> Back to Sevanta Home
       </Link>
 
       <div
@@ -29,14 +29,14 @@ export default function PrivacyPage() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-          <img src="/fixnear-logo.png" alt="FixNear" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
+          <img src="/sevanta-logo.png" alt="Sevanta" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
           <h1 style={{ fontSize: '2rem' }}>
-            <span style={{ color: '#0b3b95' }}>Fix</span>
-            <span style={{ color: '#00a651' }}>Near</span> Privacy & Data Policy
+            <span style={{ color: 'var(--primary)' }}>Seva</span>
+            <span style={{ color: 'var(--secondary)' }}>nta</span> Privacy & Data Policy
           </h1>
         </div>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '2rem' }}>
-          FixNear India • Privacy Commitment • Chilakaluripet, AP
+          Sevanta India (formerly FixNear) • DPDP Act Privacy Commitment • Chilakaluripet, AP
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', lineHeight: 1.7, color: 'var(--text-secondary)' }}>

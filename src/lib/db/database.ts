@@ -183,8 +183,8 @@ sqlite.exec(`
     defaultSearchRadiusKm REAL NOT NULL DEFAULT 15.0,
     currency TEXT NOT NULL DEFAULT 'INR',
     supportPhone TEXT NOT NULL DEFAULT '+91 8647 254999',
-    supportEmail TEXT NOT NULL DEFAULT 'support@fixnear.in',
-    upiVpa TEXT NOT NULL DEFAULT 'fixnear.payments@okhdfcbank',
+    supportEmail TEXT NOT NULL DEFAULT 'support@sevanta.in',
+    upiVpa TEXT NOT NULL DEFAULT 'sevanta.payments@okhdfcbank',
     updatedAt TEXT NOT NULL
   );
 
@@ -271,8 +271,8 @@ class PersistentDatabase {
         defaultSearchRadiusKm: 15.0,
         currency: 'INR',
         supportPhone: '+91 8647 254999',
-        supportEmail: 'support@fixnear.in',
-        upiVpa: 'fixnear.payments@okhdfcbank',
+        supportEmail: 'support@sevanta.in',
+        upiVpa: 'sevanta.payments@okhdfcbank',
       };
 
       sqlite.prepare(`
@@ -335,8 +335,8 @@ class PersistentDatabase {
       : (row ? row.defaultSearchRadiusKm : 15.0);
     const currency = settings.currency || (row ? row.currency : 'INR');
     const supportPhone = settings.supportPhone || (row ? row.supportPhone : '+91 8647 254999');
-    const supportEmail = settings.supportEmail || (row ? row.supportEmail : 'support@fixnear.in');
-    const upiVpa = settings.upiVpa || (row ? row.upiVpa : 'fixnear.payments@okhdfcbank');
+    const supportEmail = settings.supportEmail || (row ? row.supportEmail : 'support@sevanta.in');
+    const upiVpa = settings.upiVpa || (row ? row.upiVpa : 'sevanta.payments@okhdfcbank');
 
     const stmt = sqlite.prepare(`
       INSERT INTO platform_settings (id, commissionPercent, matchingWeights, defaultSearchRadiusKm, currency, supportPhone, supportEmail, upiVpa, updatedAt)
@@ -967,9 +967,9 @@ class PersistentDatabase {
     // 2. Admin User
     this.saveUser({
       id: 'usr-admin-1',
-      name: 'FixNear Platform Admin',
+      name: 'Sevanta Platform Admin',
       phone: '+91 90000 00001',
-      email: 'admin@fixnear.in',
+      email: 'admin@sevanta.in',
       role: 'ADMIN',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
