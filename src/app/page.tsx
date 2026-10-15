@@ -17,6 +17,7 @@ import AuthModal from '@/components/auth/AuthModal';
 import ProviderOnboardingModal from '@/components/provider/ProviderOnboardingModal';
 import BookingChatModal from '@/components/chat/BookingChatModal';
 import PersonaSwitcherModal from '@/components/auth/PersonaSwitcherModal';
+import PhiksNiyarLogo from '@/components/common/PhiksNiyarLogo';
 import {
   UserRole,
   AIUnderstoodRequest,
@@ -50,7 +51,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedLang = (localStorage.getItem('fixnear_lang') || localStorage.getItem('manaseva_lang')) as Language;
+      const savedLang = (localStorage.getItem('phiksniyar_lang') || localStorage.getItem('sevanta_lang') || localStorage.getItem('fixnear_lang') || localStorage.getItem('manaseva_lang')) as Language;
       if (savedLang === 'en' || savedLang === 'te') {
         setCurrentLang(savedLang);
       }
@@ -60,7 +61,7 @@ export default function HomePage() {
   const handleLangChange = (lang: Language) => {
     setCurrentLang(lang);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('fixnear_lang', lang);
+      localStorage.setItem('phiksniyar_lang', lang);
     }
   };
 
@@ -373,7 +374,7 @@ export default function HomePage() {
           bookingId,
           priceMatchedAmount: matchedAmount,
           actorRole: 'CUSTOMER',
-          note: `Customer price matched to ₹${matchedAmount} on app under Sevanta Protection`,
+          note: `Customer price matched to ₹${matchedAmount} on app under PhiksNiyar Protection`,
         }),
       });
       const json = await res.json();
@@ -381,7 +382,7 @@ export default function HomePage() {
         showToast(
           currentLang === 'te'
             ? `బిల్లు ₹${matchedAmount} కి మార్చబడింది! మీ 7 రోజుల ఉచిత వారంటీ యాక్టివ్‌గా ఉంది.`
-            : `Bill matched to ₹${matchedAmount}! Sevanta 7-Day Warranty kept 100% active.`
+            : `Bill matched to ₹${matchedAmount}! PhiksNiyar 7-Day Warranty kept 100% active.`
         );
         await loadCustomerBookings();
       } else {
@@ -525,7 +526,11 @@ export default function HomePage() {
               <span className="live-pulse-dot" />
               <span>{t.liveBadge}</span>
             </span>
-            <span style={{ fontWeight: 700 }}>{t.activeProsCount}</span>
+            <span style={{ fontWeight: 700 }}>
+              {matches.length > 0
+                ? `${matches.length} ${t.activeProsCount}`
+                : t.providersJoining}
+            </span>
           </div>
           <div
             style={{
@@ -1021,22 +1026,9 @@ export default function HomePage() {
             }}
           >
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <div className="brand-logo-card" style={{ width: '38px', height: '38px' }}>
-                  <img
-                    src="/sevanta-logo.png"
-                    alt="Sevanta"
-                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                  />
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontWeight: 800, fontSize: '1.25rem' }}>
-                  <span>
-                    <span style={{ color: 'var(--primary)' }}>Seva</span>
-                    <span style={{ color: 'var(--secondary)' }}>nta</span>
-                  </span>
-                  <span style={{ color: 'var(--secondary)', fontSize: '0.85rem' }}>(సేవంత)</span>
-                  <span className="brand-badge">CHILAKALURIPET</span>
-                </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                <PhiksNiyarLogo variant="full" size="md" withTagline={false} />
+                <span className="brand-badge">CHILAKALURIPET</span>
               </div>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: '0.4rem', maxWidth: '540px', lineHeight: 1.4 }}>
                 {t.footerDesc}
@@ -1072,7 +1064,7 @@ export default function HomePage() {
             <div style={{ maxWidth: '650px', lineHeight: 1.4 }}>
               {t.complianceNotice}
             </div>
-            <div>© {new Date().getFullYear()} Sevanta (సేవంత) Technologies. All rights reserved.</div>
+            <div>© {new Date().getFullYear()} PhiksNiyar (ఫిక్స్ నియర్) Technologies. All rights reserved.</div>
           </div>
         </div>
       </footer>

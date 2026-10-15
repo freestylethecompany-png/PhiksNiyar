@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Shield, Lock } from 'lucide-react';
+import PhiksNiyarLogo from '@/components/common/PhiksNiyarLogo';
 
 export default function PrivacyPage() {
   return (
@@ -16,7 +17,7 @@ export default function PrivacyPage() {
           marginBottom: '1.5rem',
         }}
       >
-        <ArrowLeft size={16} /> Back to Sevanta Home
+        <ArrowLeft size={16} /> Back to PhiksNiyar Home
       </Link>
 
       <div
@@ -28,15 +29,14 @@ export default function PrivacyPage() {
           boxShadow: 'var(--shadow-sm)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-          <img src="/sevanta-logo.png" alt="Sevanta" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
-          <h1 style={{ fontSize: '2rem' }}>
-            <span style={{ color: 'var(--primary)' }}>Seva</span>
-            <span style={{ color: 'var(--secondary)' }}>nta</span> Privacy & Data Policy
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+          <PhiksNiyarLogo variant="full" size="md" withTagline={false} />
+          <h1 style={{ fontSize: '1.75rem', margin: 0, fontWeight: 800, color: 'var(--text-primary)' }}>
+            Privacy & Data Policy
           </h1>
         </div>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '2rem' }}>
-          Sevanta India (formerly FixNear) • DPDP Act Privacy Commitment • Chilakaluripet, AP
+          PhiksNiyar India • DPDP Act 2023 Privacy Commitment • Chilakaluripet, AP
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', lineHeight: 1.7, color: 'var(--text-secondary)' }}>

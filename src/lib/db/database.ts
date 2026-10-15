@@ -1,4 +1,4 @@
-// Persistent SQLite Database Repository for LOCALAI
+// Persistent SQLite Database Repository for PhiksNiyar
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
@@ -16,6 +16,9 @@ import {
   UserRole,
   DeliveryTrackingOrder,
   DeliveryStatus,
+  WarrantyRecord,
+  DisputeRecord,
+  CashPaymentRecord,
 } from './types';
 import { INITIAL_CITIES, CHILAKALURIPET_AREAS } from '../constants/locations';
 import { SERVICE_CATEGORIES } from '../constants/categories';
@@ -39,13 +42,29 @@ try {
 }
 
 const legacyDbPath = path.join(dataDir, 'localai.db');
-const dbPath = process.env.DATABASE_PATH || path.join(dataDir, 'fixnear.db');
+const fixnearDbPath = path.join(dataDir, 'fixnear.db');
+const sevantaDbPath = path.join(dataDir, 'sevanta.db');
+const dbPath = process.env.DATABASE_PATH || path.join(dataDir, 'phiksniyar.db');
 
-if (fs.existsSync(/* turbopackIgnore: true */ legacyDbPath) && !fs.existsSync(/* turbopackIgnore: true */ dbPath)) {
-  try {
-    fs.copyFileSync(legacyDbPath, dbPath);
-  } catch (e) {
-    console.warn('Could not copy legacy DB, creating new fixnear.db');
+if (!fs.existsSync(/* turbopackIgnore: true */ dbPath)) {
+  if (fs.existsSync(/* turbopackIgnore: true */ sevantaDbPath)) {
+    try {
+      fs.copyFileSync(sevantaDbPath, dbPath);
+    } catch (e) {
+      console.warn('Could not copy sevanta DB, creating new phiksniyar.db');
+    }
+  } else if (fs.existsSync(/* turbopackIgnore: true */ fixnearDbPath)) {
+    try {
+      fs.copyFileSync(fixnearDbPath, dbPath);
+    } catch (e) {
+      console.warn('Could not copy fixnear DB, creating new phiksniyar.db');
+    }
+  } else if (fs.existsSync(/* turbopackIgnore: true */ legacyDbPath)) {
+    try {
+      fs.copyFileSync(legacyDbPath, dbPath);
+    } catch (e) {
+      console.warn('Could not copy legacy DB, creating new phiksniyar.db');
+    }
   }
 }
 
@@ -183,8 +202,8 @@ sqlite.exec(`
     defaultSearchRadiusKm REAL NOT NULL DEFAULT 15.0,
     currency TEXT NOT NULL DEFAULT 'INR',
     supportPhone TEXT NOT NULL DEFAULT '+91 8647 254999',
-    supportEmail TEXT NOT NULL DEFAULT 'support@sevanta.in',
-    upiVpa TEXT NOT NULL DEFAULT 'sevanta.payments@okhdfcbank',
+    supportEmail TEXT NOT NULL DEFAULT 'support@phiksniyar.in',
+    upiVpa TEXT NOT NULL DEFAULT 'phiksniyar.payments@okhdfcbank',
     updatedAt TEXT NOT NULL
   );
 
@@ -221,9 +240,42 @@ sqlite.exec(`
     createdAt TEXT NOT NULL,
     updatedAt TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS warranties (
+    id TEXT PRIMARY KEY,
+    bookingId TEXT UNIQUE NOT NULL,
+    customerId TEXT NOT NULL,
+    providerId TEXT NOT NULL,
+    serviceCategory TEXT NOT NULL,
+    warrantyStart TEXT NOT NULL,
+    warrantyEnd TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'ACTIVE',
+    claimReason TEXT,
+    claimedAt TEXT,
+    resolutionNotes TEXT,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL,
+    FOREIGN KEY(bookingId) REFERENCES bookings(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS disputes (
+    id TEXT PRIMARY KEY,
+    bookingId TEXT NOT NULL,
+    raisedBy TEXT NOT NULL,
+    raisedByRole TEXT NOT NULL,
+    category TEXT NOT NULL,
+    description TEXT NOT NULL,
+    evidenceUrls TEXT,
+    status TEXT NOT NULL DEFAULT 'OPEN',
+    resolutionNotes TEXT,
+    refundAmount REAL,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL,
+    FOREIGN KEY(bookingId) REFERENCES bookings(id) ON DELETE CASCADE
+  );
 `);
 
-// High-security Aadhaar & Place verification, Doorstep OTP, and Anti-Circumvention migrations
+// High-security Aadhaar & Place verification, Doorstep OTP, Anti-Circumvention, Cash, and Warranty migrations
 const addColumnSafe = (table: string, columnDef: string) => {
   try {
     sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${columnDef}`);
@@ -245,6 +297,15 @@ addColumnSafe('bookings', 'startOtp TEXT');
 addColumnSafe('bookings', 'cancellationReason TEXT');
 addColumnSafe('bookings', 'cancellationFlaggedCollusion INTEGER DEFAULT 0');
 addColumnSafe('bookings', 'priceMatchedAmount REAL');
+addColumnSafe('bookings', 'additionalChargesRequested REAL');
+addColumnSafe('bookings', 'additionalChargesReason TEXT');
+addColumnSafe('bookings', 'additionalChargesApproved INTEGER DEFAULT 0');
+addColumnSafe('bookings', 'additionalChargesApprovedAt TEXT');
+addColumnSafe('bookings', 'cashPaymentReportedAmount REAL');
+addColumnSafe('bookings', 'cashPaymentStatus TEXT DEFAULT "NONE"');
+addColumnSafe('bookings', 'cashPaymentConfirmedAt TEXT');
+addColumnSafe('bookings', 'cashPaymentReportedBy TEXT');
+addColumnSafe('bookings', 'warrantyId TEXT');
 
 // Repository Class providing type-safe CRUD
 class PersistentDatabase {
@@ -271,8 +332,8 @@ class PersistentDatabase {
         defaultSearchRadiusKm: 15.0,
         currency: 'INR',
         supportPhone: '+91 8647 254999',
-        supportEmail: 'support@sevanta.in',
-        upiVpa: 'sevanta.payments@okhdfcbank',
+        supportEmail: 'support@phiksniyar.in',
+        upiVpa: 'phiksniyar.payments@okhdfcbank',
       };
 
       sqlite.prepare(`
@@ -335,8 +396,8 @@ class PersistentDatabase {
       : (row ? row.defaultSearchRadiusKm : 15.0);
     const currency = settings.currency || (row ? row.currency : 'INR');
     const supportPhone = settings.supportPhone || (row ? row.supportPhone : '+91 8647 254999');
-    const supportEmail = settings.supportEmail || (row ? row.supportEmail : 'support@sevanta.in');
-    const upiVpa = settings.upiVpa || (row ? row.upiVpa : 'sevanta.payments@okhdfcbank');
+    const supportEmail = settings.supportEmail || (row ? row.supportEmail : 'support@phiksniyar.in');
+    const upiVpa = settings.upiVpa || (row ? row.upiVpa : 'phiksniyar.payments@okhdfcbank');
 
     const stmt = sqlite.prepare(`
       INSERT INTO platform_settings (id, commissionPercent, matchingWeights, defaultSearchRadiusKm, currency, supportPhone, supportEmail, upiVpa, updatedAt)
@@ -547,8 +608,10 @@ class PersistentDatabase {
         customerAddress, providerId, providerName, providerPhone,
         category, subcategory, description, scheduledDate, scheduledTime,
         status, statusHistory, pricing, payment, dispute, createdAt, updatedAt,
-        startOtp, cancellationReason, cancellationFlaggedCollusion, priceMatchedAmount
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        startOtp, cancellationReason, cancellationFlaggedCollusion, priceMatchedAmount,
+        additionalChargesRequested, additionalChargesReason, additionalChargesApproved, additionalChargesApprovedAt,
+        cashPaymentReportedAmount, cashPaymentStatus, cashPaymentConfirmedAt, cashPaymentReportedBy, warrantyId
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         status = excluded.status,
         statusHistory = excluded.statusHistory,
@@ -559,7 +622,16 @@ class PersistentDatabase {
         startOtp = COALESCE(excluded.startOtp, bookings.startOtp),
         cancellationReason = COALESCE(excluded.cancellationReason, bookings.cancellationReason),
         cancellationFlaggedCollusion = MAX(excluded.cancellationFlaggedCollusion, bookings.cancellationFlaggedCollusion),
-        priceMatchedAmount = COALESCE(excluded.priceMatchedAmount, bookings.priceMatchedAmount)
+        priceMatchedAmount = COALESCE(excluded.priceMatchedAmount, bookings.priceMatchedAmount),
+        additionalChargesRequested = COALESCE(excluded.additionalChargesRequested, bookings.additionalChargesRequested),
+        additionalChargesReason = COALESCE(excluded.additionalChargesReason, bookings.additionalChargesReason),
+        additionalChargesApproved = COALESCE(excluded.additionalChargesApproved, bookings.additionalChargesApproved),
+        additionalChargesApprovedAt = COALESCE(excluded.additionalChargesApprovedAt, bookings.additionalChargesApprovedAt),
+        cashPaymentReportedAmount = COALESCE(excluded.cashPaymentReportedAmount, bookings.cashPaymentReportedAmount),
+        cashPaymentStatus = COALESCE(excluded.cashPaymentStatus, bookings.cashPaymentStatus),
+        cashPaymentConfirmedAt = COALESCE(excluded.cashPaymentConfirmedAt, bookings.cashPaymentConfirmedAt),
+        cashPaymentReportedBy = COALESCE(excluded.cashPaymentReportedBy, bookings.cashPaymentReportedBy),
+        warrantyId = COALESCE(excluded.warrantyId, bookings.warrantyId)
     `);
 
     stmt.run(
@@ -587,7 +659,16 @@ class PersistentDatabase {
       booking.startOtp || null,
       booking.cancellationReason || null,
       booking.cancellationFlaggedCollusion ? 1 : 0,
-      booking.priceMatchedAmount || null
+      booking.priceMatchedAmount || null,
+      booking.additionalCharges?.proposedAmount || null,
+      booking.additionalCharges?.reason || null,
+      booking.additionalCharges?.customerApproved ? 1 : 0,
+      booking.additionalCharges?.approvedAt || null,
+      booking.cashPayment?.reportedAmount || null,
+      booking.cashPayment?.status || 'NONE',
+      booking.cashPayment?.confirmedAt || null,
+      booking.cashPayment?.reportedByUserId || null,
+      booking.warrantyId || null
     );
 
     return booking;
@@ -783,8 +864,25 @@ class PersistentDatabase {
       dispute: row.dispute ? JSON.parse(row.dispute) : undefined,
       startOtp: row.startOtp || undefined,
       cancellationReason: row.cancellationReason || undefined,
-      cancellationFlaggedCollusion: Boolean(row.cancellationFlaggedCollusion),
       priceMatchedAmount: row.priceMatchedAmount || undefined,
+      additionalCharges: row.additionalChargesRequested
+        ? {
+            proposedAmount: row.additionalChargesRequested,
+            reason: row.additionalChargesReason || 'Additional service parts/charges',
+            customerApproved: Boolean(row.additionalChargesApproved),
+            approvedAt: row.additionalChargesApprovedAt || undefined,
+          }
+        : undefined,
+      cashPayment: row.cashPaymentReportedAmount
+        ? {
+            reportedAmount: row.cashPaymentReportedAmount,
+            status: row.cashPaymentStatus || 'NONE',
+            reportedByUserId: row.cashPaymentReportedBy || '',
+            reportedAt: row.updatedAt,
+            confirmedAt: row.cashPaymentConfirmedAt || undefined,
+          }
+        : undefined,
+      warrantyId: row.warrantyId || undefined,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };
@@ -967,9 +1065,9 @@ class PersistentDatabase {
     // 2. Admin User
     this.saveUser({
       id: 'usr-admin-1',
-      name: 'Sevanta Platform Admin',
+      name: 'PhiksNiyar Platform Admin',
       phone: '+91 90000 00001',
-      email: 'admin@sevanta.in',
+      email: 'admin@phiksniyar.in',
       role: 'ADMIN',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -1232,7 +1330,7 @@ class PersistentDatabase {
         paymentId: 'pay-hist-1',
         method: 'UPI',
         status: 'SUCCESS',
-        transactionRef: 'UPI/384910294/FIXNEAR',
+        transactionRef: 'UPI/384910294/PHIKSNIYAR',
         paidAt: new Date(Date.now() - 5 * 86400000).toISOString(),
       },
       createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
@@ -1312,7 +1410,7 @@ class PersistentDatabase {
         bookingId: 'bk-1791385037898',
         status: 'ON_THE_WAY',
         statusHistory: [
-          { status: 'ORDER_CONFIRMED', timestamp: new Date(Date.now() - 25 * 60000).toISOString(), note: 'Order confirmed by FixNear Services' },
+          { status: 'ORDER_CONFIRMED', timestamp: new Date(Date.now() - 25 * 60000).toISOString(), note: 'Order confirmed by PhiksNiyar Services' },
           { status: 'PREPARING', timestamp: new Date(Date.now() - 18 * 60000).toISOString(), note: 'AC replacement parts & diagnostic kit packed' },
           { status: 'PICKED_UP', timestamp: new Date(Date.now() - 10 * 60000).toISOString(), note: 'Ravi Kumar picked up package from Pandaripuram Spares Hub' },
           { status: 'ON_THE_WAY', timestamp: new Date(Date.now() - 5 * 60000).toISOString(), note: 'Delivery partner is on the way to customer doorstep' },
@@ -1326,7 +1424,7 @@ class PersistentDatabase {
           landmark: 'Opposite Kalamandir Cloth Showroom',
         },
         pickup: {
-          name: 'FixNear Pandaripuram Parts Hub',
+          name: 'PhiksNiyar Pandaripuram Parts Hub',
           phone: '+91 8647 254999',
           location: { latitude: 16.0910, longitude: 80.1695 },
           address: 'Main Road, Pandaripuram, Chilakaluripet',
@@ -1365,6 +1463,128 @@ class PersistentDatabase {
     }
   }
 
+  // --- WARRANTIES (7-Day Doorstep Guarantee) ---
+  public createWarranty(data: Omit<WarrantyRecord, 'createdAt' | 'updatedAt'>): WarrantyRecord {
+    const record: WarrantyRecord = {
+      ...data,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    sqlite.prepare(`
+      INSERT OR REPLACE INTO warranties (id, bookingId, customerId, providerId, serviceCategory, warrantyStart, warrantyEnd, status, claimReason, claimedAt, resolutionNotes, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      record.id,
+      record.bookingId,
+      record.customerId,
+      record.providerId,
+      record.serviceCategory,
+      record.warrantyStart,
+      record.warrantyEnd,
+      record.status,
+      record.claimReason || null,
+      record.claimedAt || null,
+      record.resolutionNotes || null,
+      record.createdAt,
+      record.updatedAt
+    );
+    return record;
+  }
+
+  public getWarrantyByBookingId(bookingId: string): WarrantyRecord | null {
+    const row = sqlite.prepare('SELECT * FROM warranties WHERE bookingId = ?').get(bookingId) as any;
+    if (!row) return null;
+    return row as WarrantyRecord;
+  }
+
+  public getWarrantiesByCustomerId(customerId: string): WarrantyRecord[] {
+    const rows = sqlite.prepare('SELECT * FROM warranties WHERE customerId = ? ORDER BY createdAt DESC').all(customerId) as any[];
+    return rows as WarrantyRecord[];
+  }
+
+  public claimWarranty(warrantyId: string, claimReason: string): boolean {
+    const result = sqlite.prepare(`
+      UPDATE warranties
+      SET status = 'CLAIMED', claimReason = ?, claimedAt = ?, updatedAt = ?
+      WHERE id = ? AND status = 'ACTIVE'
+    `).run(claimReason, new Date().toISOString(), new Date().toISOString(), warrantyId);
+    return result.changes > 0;
+  }
+
+  // --- DISPUTES ---
+  public createDispute(data: Omit<DisputeRecord, 'createdAt' | 'updatedAt'>): DisputeRecord {
+    const record: DisputeRecord = {
+      ...data,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    sqlite.prepare(`
+      INSERT OR REPLACE INTO disputes (id, bookingId, raisedBy, raisedByRole, category, description, evidenceUrls, status, resolutionNotes, refundAmount, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      record.id,
+      record.bookingId,
+      record.raisedBy,
+      record.raisedByRole,
+      record.category,
+      record.description,
+      record.evidenceUrls ? JSON.stringify(record.evidenceUrls) : null,
+      record.status,
+      record.resolutionNotes || null,
+      record.refundAmount || null,
+      record.createdAt,
+      record.updatedAt
+    );
+    return record;
+  }
+
+  public getDisputes(): DisputeRecord[] {
+    const rows = sqlite.prepare('SELECT * FROM disputes ORDER BY createdAt DESC').all() as any[];
+    return rows.map((r) => ({
+      ...r,
+      evidenceUrls: r.evidenceUrls ? JSON.parse(r.evidenceUrls) : [],
+    }));
+  }
+
+  public getDisputeById(id: string): DisputeRecord | null {
+    const row = sqlite.prepare('SELECT * FROM disputes WHERE id = ?').get(id) as any;
+    if (!row) return null;
+    return {
+      ...row,
+      evidenceUrls: row.evidenceUrls ? JSON.parse(row.evidenceUrls) : [],
+    };
+  }
+
+  public updateDispute(id: string, updates: Partial<DisputeRecord>): boolean {
+    const current = this.getDisputeById(id);
+    if (!current) return false;
+    const updated = { ...current, ...updates, updatedAt: new Date().toISOString() };
+    sqlite.prepare(`
+      UPDATE disputes
+      SET status = ?, resolutionNotes = ?, refundAmount = ?, updatedAt = ?
+      WHERE id = ?
+    `).run(updated.status, updated.resolutionNotes || null, updated.refundAmount || null, updated.updatedAt, id);
+    return true;
+  }
+
+  // --- HEALTH CHECK ---
+  public checkHealth(): { healthy: boolean; stats: { userCount: number; providerCount: number; bookingCount: number } } {
+    try {
+      const userCount = (sqlite.prepare('SELECT COUNT(*) as count FROM users').get() as any)?.count || 0;
+      const providerCount = (sqlite.prepare('SELECT COUNT(*) as count FROM providers').get() as any)?.count || 0;
+      const bookingCount = (sqlite.prepare('SELECT COUNT(*) as count FROM bookings').get() as any)?.count || 0;
+      return {
+        healthy: true,
+        stats: { userCount, providerCount, bookingCount },
+      };
+    } catch (e) {
+      return {
+        healthy: false,
+        stats: { userCount: 0, providerCount: 0, bookingCount: 0 },
+      };
+    }
+  }
+
   // Compat getters for legacy code
   public get settings() {
     return this.getSettings();
@@ -1372,6 +1592,10 @@ class PersistentDatabase {
 }
 
 // Global Singleton
-const globalForDb = globalThis as unknown as { localaiPersistentDb?: PersistentDatabase };
-export const db = globalForDb.localaiPersistentDb || new PersistentDatabase();
-if (process.env.NODE_ENV !== 'production') globalForDb.localaiPersistentDb = db;
+const globalForDb = globalThis as unknown as { phiksniyarPersistentDb?: PersistentDatabase; sevantaPersistentDb?: PersistentDatabase; localaiPersistentDb?: PersistentDatabase };
+export const db = globalForDb.phiksniyarPersistentDb || globalForDb.sevantaPersistentDb || globalForDb.localaiPersistentDb || new PersistentDatabase();
+if (process.env.NODE_ENV !== 'production') {
+  globalForDb.phiksniyarPersistentDb = db;
+  globalForDb.sevantaPersistentDb = db;
+  globalForDb.localaiPersistentDb = db;
+}

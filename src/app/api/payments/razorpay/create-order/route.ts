@@ -91,7 +91,7 @@ export async function POST(request: Request) {
       orderId: simulatedOrderId,
       amount: amountInPaise,
       currency: 'INR',
-      keyId: razorpayKeyId || 'rzp_test_SANDBOX_KEY_FIXNEAR',
+      keyId: razorpayKeyId || 'rzp_test_SANDBOX_KEY_PHIKSNIYAR',
     });
   } catch (error) {
     console.error('Error in /api/payments/razorpay/create-order:', error);

@@ -32,7 +32,7 @@ export function maskIdentityNumber(rawId: string): string {
  */
 export function hashIdentitySecure(rawId: string): string {
   const cleaned = rawId.replace(/[\s-]/g, '');
-  const salt = process.env.IDENTITY_SALT || 'FIXNEAR_KYC_SECURE_SALT_CHILAKALURIPET_2026';
+  const salt = process.env.IDENTITY_SALT || 'PHIKSNIYAR_KYC_SECURE_SALT_CHILAKALURIPET_2026';
   return crypto.createHmac('sha256', salt).update(cleaned).digest('hex');
 }
 

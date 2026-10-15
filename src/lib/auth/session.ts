@@ -10,9 +10,9 @@ export function getJwtSecret(): string {
   }
   if (process.env.NODE_ENV === 'production') {
     console.error('SECURITY WARNING: JWT_SECRET is unset or too short in production. Please set a 32+ character JWT_SECRET.');
-    return secret || 'fixnear-production-fallback-key-32-chars-long-security';
+    return secret || 'phiksniyar-production-fallback-key-32-chars-long-security';
   }
-  return 'fixnear-development-only-secret-key-not-for-production-use';
+  return 'phiksniyar-development-only-secret-key-not-for-production-use';
 }
 
 export interface AuthSessionPayload {
@@ -29,6 +29,7 @@ export async function getAuthSession(): Promise<AuthSessionPayload | null> {
   try {
     const cookieStore = await cookies();
     const token =
+      cookieStore.get('phiksniyar_session')?.value ||
       cookieStore.get('sevanta_session')?.value ||
       cookieStore.get('fixnear_session')?.value ||
       cookieStore.get('localai_session')?.value;

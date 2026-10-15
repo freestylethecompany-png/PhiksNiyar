@@ -150,7 +150,7 @@ export async function POST(request: Request) {
       latitude: latToVerify,
       longitude: lngToVerify,
       verificationStatus: 'DOCUMENT_SUBMITTED', // MUST be DOCUMENT_SUBMITTED, never VERIFIED
-      verificationProvider: 'FIXNEAR_ADMIN_REVIEW',
+      verificationProvider: 'PHIKSNIYAR_ADMIN_REVIEW',
       providerReferenceId: identityHash.slice(0, 16),
       verificationTimestamp: new Date().toISOString(),
       maskedIdentityReference: maskedIdentity,
@@ -210,7 +210,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Application submitted successfully! Your documents and trade details will be verified by the Sevanta verification team before receiving the Verified badge.',
+      message: 'Application submitted successfully! Your documents and trade details will be verified by the PhiksNiyar verification team before receiving the Verified badge.',
       provider: newProvider,
     });
   } catch (error) {

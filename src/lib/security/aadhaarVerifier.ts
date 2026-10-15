@@ -1,4 +1,4 @@
-// FixNear Identity Validation & Geofencing Module
+// PhiksNiyar Identity Validation & Geofencing Module
 // Compliant with DPDP Act 2023: Raw identity documents are NOT stored in plaintext.
 // Pre-flight validation checks numerical formatting only; official verification requires
 // authorized KYC review or manual administrative audit.

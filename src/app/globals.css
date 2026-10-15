@@ -1,58 +1,58 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Sevanta Brand Primary (Vibrant Home Energy & Service Orange) */
-  --primary: #ea580c;
-  --primary-hover: #c2410c;
-  --primary-dark: #9a3412;
-  --primary-50: #fff7ed;
-  --primary-100: #ffedd5;
-  --primary-200: #fed7aa;
-  --primary-glow: rgba(234, 88, 12, 0.16);
+  /* PhiksNiyar Canonical Brand Primary (Deep Indigo) */
+  --primary: #182B49;
+  --primary-hover: #122138;
+  --primary-dark: #0c1626;
+  --primary-50: #f0f4f9;
+  --primary-100: #e0e9f4;
+  --primary-200: #c2d3e9;
+  --primary-glow: rgba(24, 43, 73, 0.16);
 
-  /* Sevanta Brand Secondary & Trust (Pure Verified Emerald) */
-  --secondary: #059669;
-  --secondary-hover: #047857;
-  --secondary-dark: #064e3b;
+  /* PhiksNiyar Canonical Secondary & Verified Trust (Emerald) */
+  --secondary: #0F9D72;
+  --secondary-hover: #0c825e;
+  --secondary-dark: #096348;
   --secondary-50: #ecfdf5;
   --secondary-100: #d1fae5;
   --secondary-200: #a7f3d0;
-  --secondary-glow: rgba(5, 150, 105, 0.16);
+  --secondary-glow: rgba(15, 157, 114, 0.16);
 
-  /* Brand Signature Gradient (Orange to Emerald as in the Sevanta 'S' emblem) */
-  --brand-gradient: linear-gradient(135deg, #ea580c 0%, #059669 100%);
-  --brand-orange: #ea580c;
-  --brand-green: #059669;
-  --brand-navy: #0f172a;
-
-  /* Accent Saffron / Amber */
-  --accent-saffron: #d97706;
-  --accent-saffron-hover: #b45309;
+  /* PhiksNiyar Canonical Accent (Saffron / Warm Gold) */
+  --accent-saffron: #F59E0B;
+  --accent-saffron-hover: #d97706;
   --accent-saffron-light: #fef3c7;
 
-  /* Refined Neutral Foundation */
-  --bg-main: #f8fafc;
-  --surface: #ffffff;
+  /* Brand Signature Gradient (Deep Indigo to Emerald with subtle Saffron touch) */
+  --brand-gradient: linear-gradient(135deg, #182B49 0%, #0F9D72 100%);
+  --brand-indigo: #182B49;
+  --brand-green: #0F9D72;
+  --brand-saffron: #F59E0B;
+
+  /* Neutral Foundation */
+  --bg-main: #F8FAFC;
+  --surface: #FFFFFF;
   --surface-alt: #f1f5f9;
-  --surface-hover: #f8fafc;
+  --surface-hover: #F8FAFC;
   --border-subtle: #f1f5f9;
   --border-light: #e2e8f0;
   --border-medium: #cbd5e1;
-  --border-focus: #1d4ed8;
+  --border-focus: #182B49;
 
   /* Typography Colors */
-  --text-primary: #0f172a;
+  --text-primary: #111827;
   --text-secondary: #334155;
-  --text-muted: #64748b;
+  --text-muted: #64748B;
   --text-subtle: #94a3b8;
   --text-inverse: #ffffff;
 
   /* Feedback Colors */
-  --success: #059669;
+  --success: #16A34A;
   --success-light: #ecfdf5;
-  --danger: #dc2626;
+  --danger: #DC2626;
   --danger-light: #fef2f2;
-  --warning: #d97706;
+  --warning: #F59E0B;
   --warning-light: #fef3c7;
   --info: #0284c7;
   --info-light: #f0f9ff;
@@ -67,15 +67,16 @@
   --radius-full: 9999px;
 
   /* Calibrated Elevation & Soft Ambient Shadows */
-  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
-  --shadow-md: 0 4px 10px -2px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.03);
-  --shadow-lg: 0 12px 24px -4px rgba(15, 23, 42, 0.08), 0 4px 8px -2px rgba(15, 23, 42, 0.03);
-  --shadow-xl: 0 20px 32px -6px rgba(15, 23, 42, 0.12), 0 8px 12px -4px rgba(15, 23, 42, 0.04);
-  --shadow-glow: 0 8px 24px -4px rgba(29, 78, 216, 0.2);
+  --shadow-xs: 0 1px 2px rgba(17, 24, 39, 0.04);
+  --shadow-sm: 0 1px 3px rgba(17, 24, 39, 0.05), 0 1px 2px rgba(17, 24, 39, 0.03);
+  --shadow-md: 0 4px 10px -2px rgba(17, 24, 39, 0.07), 0 2px 4px -2px rgba(17, 24, 39, 0.03);
+  --shadow-lg: 0 12px 24px -4px rgba(17, 24, 39, 0.08), 0 4px 8px -2px rgba(17, 24, 39, 0.03);
+  --shadow-xl: 0 20px 32px -6px rgba(17, 24, 39, 0.12), 0 8px 12px -4px rgba(17, 24, 39, 0.04);
+  --shadow-glow: 0 8px 24px -4px rgba(24, 43, 73, 0.2);
 
-  --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Plus Jakarta Sans', 'Noto Sans Telugu', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'Inter', 'Noto Sans Telugu', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-telugu: 'Noto Sans Telugu', 'Gautami', 'Tenali Ramakrishna', sans-serif;
   --container-max: 1200px;
 }
 

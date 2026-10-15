@@ -6,6 +6,7 @@ export interface Translations {
   brandTagline: string;
   liveBadge: string;
   activeProsCount: string;
+  providersJoining: string;
   emergencyTitle: string;
   emergencySubtitle: string;
   emergencyAction: string;
@@ -101,11 +102,12 @@ export interface Translations {
 
 export const translations: Record<Language, Translations> = {
   en: {
-    brandName: 'Sevanta',
-    brandTelugu: 'సేవంత',
+    brandName: 'PhiksNiyar',
+    brandTelugu: 'ఫిక్స్ నియర్',
     brandTagline: 'Local help. Right when you need it.',
     liveBadge: '● LIVE IN CHILAKALURIPET',
-    activeProsCount: '32+ Verified Local Pros Active Now',
+    activeProsCount: 'Verified Local Professionals Active in Chilakaluripet',
+    providersJoining: 'Local Service Professionals are joining PhiksNiyar in Chilakaluripet',
     emergencyTitle: 'Emergency Repair in 30 Mins?',
     emergencySubtitle: 'Short circuit, water tank overflow, AC gas leak or bike breakdown in Chilakaluripet',
     emergencyAction: 'Get Urgent Expert',
@@ -123,7 +125,7 @@ export const translations: Record<Language, Translations> = {
     heroTag: 'AI Hyperlocal Assistance in Chilakaluripet, AP',
     heroTitleMain: 'Tell Us What You Need.',
     heroTitleAccent: 'AI Finds The Right Local Expert.',
-    heroSubtitle: 'Speak or type in Telugu, Tanglish, or English. Sevanta instantly connects you with verified local technicians across Kalamandir Center, Clock Tower, Pandaripuram, and surrounding areas.',
+    heroSubtitle: 'Speak or type in Telugu, Tanglish, or English. PhiksNiyar instantly connects you with verified local technicians across Kalamandir Center, Clock Tower, Pandaripuram, and surrounding areas.',
     searchPlaceholder: 'What service do you need? e.g. "Na AC cooling sariga ledu, evaraina ravacha?"',
     voiceTooltip: 'Click to Speak (Telugu / English)',
     voiceListening: 'Listening to your voice... Speak your problem in Telugu or English',
@@ -132,11 +134,11 @@ export const translations: Record<Language, Translations> = {
     tryAsking: 'Popular in Chilakaluripet:',
 
     trustAadhaarTitle: 'Verified Local Professionals',
-    trustAadhaarDesc: 'Government ID & trade skills audited by the Sevanta verification team.',
+    trustAadhaarDesc: 'Identity and trade background verified by PhiksNiyar.',
     trustArrivalTitle: 'Fast Local Arrival',
     trustArrivalDesc: 'Neighborhood technicians operating right within Chilakaluripet.',
-    trustPriceTitle: 'Upfront Fixed Pricing',
-    trustPriceDesc: 'Standard rate card from ₹149. Zero surprise quotes, zero booking fee.',
+    trustPriceTitle: 'Transparent Rate Card',
+    trustPriceDesc: 'Standard visiting rates starting from ₹149. Zero surprise quotes, zero booking fee.',
     trustGuaranteeTitle: '7-Day Free Rework',
     trustGuaranteeDesc: 'Free resolution guarantee if repair isn’t 100% satisfactory.',
 
@@ -149,7 +151,7 @@ export const translations: Record<Language, Translations> = {
     bookNowBtn: 'Book Now',
     viewReviewsBtn: 'Reviews',
     visitingChargeLabel: 'Visiting Charge',
-    verifiedPartnerBadge: 'Sevanta Verified',
+    verifiedPartnerBadge: 'PhiksNiyar Verified',
     matchScoreLabel: 'Match Score',
     experienceYearsLabel: 'yrs exp',
     reviewsCountLabel: 'reviews',
@@ -183,18 +185,19 @@ export const translations: Record<Language, Translations> = {
     rateServiceBtn: 'Rate & Review',
     cancelBookingBtn: 'Cancel',
 
-    footerDesc: 'Sevanta (సేవంత) is Bharat’s AI-powered local marketplace connecting households with verified local trade professionals across Chilakaluripet, Palnadu District, Andhra Pradesh.',
+    footerDesc: 'PhiksNiyar (ఫిక్స్ నియర్) is Bharat’s AI-powered local marketplace connecting households with verified local trade professionals across Chilakaluripet, Palnadu District, Andhra Pradesh.',
     helpdeskLabel: 'Local Helpdesk',
     termsLink: 'Terms of Service',
     privacyLink: 'Privacy Policy',
-    complianceNotice: 'Platform Facilitator Disclaimer: Sevanta Technologies connects verified local service professionals. 100% compliant with Consumer Protection (E-Commerce) Rules, 2020.',
+    complianceNotice: 'Platform Facilitator Disclaimer: PhiksNiyar Technologies connects verified local service professionals. 100% compliant with Consumer Protection (E-Commerce) Rules, 2020.',
   },
   te: {
-    brandName: 'సేవంత',
-    brandTelugu: 'Sevanta',
+    brandName: 'ఫిక్స్ నియర్',
+    brandTelugu: 'PhiksNiyar',
     brandTagline: 'లోకల్ సాయం. మీకు అవసరమైనప్పుడే.',
     liveBadge: '● ప్రత్యక్షంగా చిలకలూరిపేటలో',
-    activeProsCount: '32+ వెరిఫైడ్ నిపుణులు ప్రస్తుతం అందుబాటులో ఉన్నారు',
+    activeProsCount: 'చిలకలూరిపేటలో ధృవీకరించబడిన స్థానిక నిపుణులు',
+    providersJoining: 'చిలకలూరిపేటలో సర్వీస్ ప్రొవైడర్లు ఫిక్స్ నియర్ (PhiksNiyar) లో చేరుతున్నారు',
     emergencyTitle: '30 నిమిషాల్లో అత్యవసర రిపేర్ కావాలా?',
     emergencySubtitle: 'షార్ట్ సర్క్యూట్, నీటి ట్యాంక్ లీకేజ్, AC గ్యాస్ లీక్ లేదా బైక్ బ్రేక్‌డౌన్',
     emergencyAction: 'అత్యవసర నిపుణుడిని పిలవండి',
@@ -212,7 +215,7 @@ export const translations: Record<Language, Translations> = {
     heroTag: 'చిలకలూరిపేట AI లోకల్ సర్వీస్ అసిస్టెంట్',
     heroTitleMain: 'మీ సమస్య ఏమిటో చెప్పండి.',
     heroTitleAccent: 'సరైన నిపుణుడిని AI జతచేస్తుంది.',
-    heroSubtitle: 'తెలుగులో లేదా ఇంగ్లీషులో మాట్లాడండి లేదా టైప్ చేయండి. కళామందిర్ సెంటర్, గడియార స్తంభం, పండరీపురం మరియు చిలకలూరిపేటలోని వెరిఫైడ్ టెక్నీషియన్లను సేవంత (Sevanta) క్షణాల్లో కలుపుతుంది.',
+    heroSubtitle: 'తెలుగులో లేదా ఇంగ్లీషులో మాట్లాడండి లేదా టైప్ చేయండి. కళామందిర్ సెంటర్, గడియార స్తంభం, పండరీపురం మరియు చిలకలూరిపేటలోని వెరిఫైడ్ టెక్నీషియన్లను ఫిక్స్ నియర్ (PhiksNiyar) క్షణాల్లో కలుపుతుంది.',
     searchPlaceholder: 'మీకు కావలసిన సర్వీస్... ఉదా: "మా AC కూలింగ్ సరిగ్గా లేదు, ఈరోజు సాయంత్రం ఎవరైనా రాగలరా?"',
     voiceTooltip: 'మాట్లాడటానికి నొక్కండి (తెలుగు / English)',
     voiceListening: 'మీ వాయిస్ వింటున్నాము... మీ సమస్యను తెలుగులో చెప్పండి',
@@ -221,11 +224,11 @@ export const translations: Record<Language, Translations> = {
     tryAsking: 'చిలకలూరిపేటలో ఎక్కువగా అడిగేవి:',
 
     trustAadhaarTitle: 'ధృవీకరించబడిన నిపుణులు',
-    trustAadhaarDesc: 'ప్రభుత్వ గుర్తింపు మరియు నైపుణ్యాలను Sevanta వెరిఫికేషన్ టీమ్ తనిఖీ చేస్తుంది.',
+    trustAadhaarDesc: 'గుర్తింపు మరియు వృత్తి అనుభవాన్ని ఫిక్స్ నియర్ (PhiksNiyar) పరిశీలించింది.',
     trustArrivalTitle: 'వేగవంతమైన స్థానిక రాక',
     trustArrivalDesc: 'చిలకలూరిపేట స్థానిక ఏరియాల్లోనే ఉండే దగ్గరి నిపుణులు.',
-    trustPriceTitle: 'ముందే తెలిసిన స్పష్టమైన ధర',
-    trustPriceDesc: 'విజిటింగ్ ఛార్జ్ ₹149 నుండి మొదలు. అదనపు హిడెన్ ఛార్జీలు లేవు.',
+    trustPriceTitle: 'స్పష్టమైన రేట్ కార్డ్',
+    trustPriceDesc: 'కనీస విజిటింగ్ ఛార్జీ ₹149 నుండి మొదలు. ముందస్తు బుకింగ్ ఫీజు లేదు.',
     trustGuaranteeTitle: '7-రోజుల ఉచిత రీవర్క్ వారంటీ',
     trustGuaranteeDesc: 'పనిలో ఏమైనా లోపం ఉంటే 7 రోజుల్లో ఉచితంగా మళ్లీ చేసిస్తారు.',
 
@@ -238,7 +241,7 @@ export const translations: Record<Language, Translations> = {
     bookNowBtn: 'ఇప్పుడే బుక్ చేయండి',
     viewReviewsBtn: 'సమీక్షలు',
     visitingChargeLabel: 'విజిటింగ్ ఛార్జీ',
-    verifiedPartnerBadge: 'సేవంత వెరిఫైడ్',
+    verifiedPartnerBadge: 'ఫిక్స్ నియర్ (PhiksNiyar) వెరిఫైడ్',
     matchScoreLabel: 'మ్యాచ్ స్కోర్',
     experienceYearsLabel: 'సంవత్సరాల అనుభవం',
     reviewsCountLabel: 'సమీక్షలు',
@@ -272,10 +275,10 @@ export const translations: Record<Language, Translations> = {
     rateServiceBtn: 'రేటింగ్ & రివ్యూ',
     cancelBookingBtn: 'రద్దు చేయండి',
 
-    footerDesc: 'సేవంత (Sevanta) చిలకలూరిపేట, పల్నాడు జిల్లా ప్రజలకు నమ్మకమైన స్థానిక టెక్నీషియన్లను క్షణాల్లో అనుసంధానించే అధునాతన AI ప్లాట్‌ఫామ్.',
+    footerDesc: 'ఫిక్స్ నియర్ (PhiksNiyar) చిలకలూరిపేట, పల్నాడు జిల్లా ప్రజలకు నమ్మకమైన స్థానిక టెక్నీషియన్లను క్షణాల్లో అనుసంధానించే అధునాతన AI ప్లాట్‌ఫామ్.',
     helpdeskLabel: 'స్థానిక హెల్ప్‌డెస్క్',
     termsLink: 'నిబంధనలు',
     privacyLink: 'గోప్యతా విధానం',
-    complianceNotice: 'ప్లాట్‌ఫామ్ డిస్క్లైమర్: Sevanta స్థానిక ప్రొఫెషనల్స్‌ను కస్టమర్లతో కలుపుతుంది. వినియోగదారుల రక్షణ నిబంధనలకు 100% కట్టుబడి ఉంది.',
+    complianceNotice: 'ప్లాట్‌ఫామ్ డిస్క్లైమర్: PhiksNiyar స్థానిక ప్రొఫెషనల్స్‌ను కస్టమర్లతో కలుపుతుంది. వినియోగదారుల రక్షణ నిబంధనలకు 100% కట్టుబడి ఉంది.',
   },
 };

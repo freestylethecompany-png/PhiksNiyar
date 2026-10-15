@@ -1,28 +1,43 @@
-// LOCALAI Database Types & Interfaces
+// PhiksNiyar Database Types & Interfaces
 
 export type UserRole = 'CUSTOMER' | 'PROVIDER' | 'SUPPORT' | 'ADMIN';
 
+// 6 Canonical Provider Lifecycle States
 export type VerificationStatus =
   | 'PENDING'
-  | 'DOCUMENT_SUBMITTED'
-  | 'KYC_PROCESSING'
+  | 'UNDER_REVIEW'
   | 'VERIFIED'
   | 'REJECTED'
-  | 'SUSPENDED';
+  | 'SUSPENDED'
+  | 'INACTIVE'
+  // Backward compatibility aliases
+  | 'DOCUMENT_SUBMITTED'
+  | 'KYC_PROCESSING';
 
+// 16 Canonical Booking Lifecycle States
 export type BookingStatus =
   | 'REQUESTED'
+  | 'MATCHING'
+  | 'PENDING_PROVIDER'
   | 'ACCEPTED'
-  | 'REJECTED'
+  | 'ON_THE_WAY'
+  | 'ARRIVED'
+  | 'OTP_PENDING'
+  | 'IN_PROGRESS'
+  | 'AWAITING_PRICE_CONFIRMATION'
+  | 'AWAITING_PAYMENT'
+  | 'COMPLETED'
   | 'CANCELLED'
+  | 'DISPUTED'
+  | 'WARRANTY_ACTIVE'
+  | 'WARRANTY_CLAIMED'
+  | 'CLOSED'
+  // Backward compatibility aliases
   | 'SCHEDULED'
   | 'PROVIDER_ON_THE_WAY'
-  | 'ARRIVED'
-  | 'IN_PROGRESS'
   | 'PAYMENT_PENDING'
   | 'PAID'
-  | 'COMPLETED'
-  | 'DISPUTED';
+  | 'REJECTED';
 
 export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
 export type PaymentMethod = 'UPI' | 'CASH' | 'RAZORPAY';
@@ -250,6 +265,21 @@ export interface Booking {
     openedBy: UserRole;
     notes?: string;
   };
+  additionalCharges?: {
+    proposedAmount: number;
+    reason: string;
+    customerApproved: boolean;
+    approvedAt?: string;
+  };
+  cashPayment?: {
+    reportedAmount: number;
+    status: 'NONE' | 'CASH_REPORTED' | 'CASH_CONFIRMED';
+    reportedByUserId: string;
+    reportedAt: string;
+    confirmedByUserId?: string;
+    confirmedAt?: string;
+  };
+  warrantyId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -364,5 +394,46 @@ export interface DeliveryTrackingOrder {
   trafficLevel: 'LOW' | 'MODERATE' | 'HEAVY';
   createdAt: string;
   updatedAt: string;
+}
+
+export interface WarrantyRecord {
+  id: string;
+  bookingId: string;
+  customerId: string;
+  providerId: string;
+  serviceCategory: string;
+  warrantyStart: string;
+  warrantyEnd: string;
+  status: 'ACTIVE' | 'CLAIMED' | 'RESOLVED' | 'EXPIRED';
+  claimReason?: string;
+  claimedAt?: string;
+  resolutionNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DisputeRecord {
+  id: string;
+  bookingId: string;
+  raisedBy: string;
+  raisedByRole: UserRole;
+  category: 'poor_service' | 'wrong_price' | 'provider_didnt_arrive' | 'damage' | 'payment_issue' | 'warranty_issue' | 'safety_issue';
+  description: string;
+  status: 'OPEN' | 'INVESTIGATING' | 'RESOLVED' | 'DISMISSED';
+  evidenceUrls?: string[];
+  resolutionNotes?: string;
+  refundAmount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CashPaymentRecord {
+  bookingId: string;
+  reportedAmount: number;
+  status: 'CASH_REPORTED' | 'CASH_CONFIRMED';
+  reportedByUserId: string;
+  reportedAt: string;
+  confirmedByUserId?: string;
+  confirmedAt?: string;
 }
 

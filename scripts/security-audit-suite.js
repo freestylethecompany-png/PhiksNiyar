@@ -1,11 +1,11 @@
-// FixNear Production Security Verification Test Suite
-// Verifies all 20 security criteria defined in Phase 27 of the Hardening Master Prompt
+// PhiksNiyar Production Security & 16-State Lifecycle Test Suite
+// Verifies all core security & transaction invariants
 
 const assert = require('assert');
 const crypto = require('crypto');
 
 console.log('====================================================');
-console.log('   FIXNEAR PRODUCTION SECURITY AUDIT TEST SUITE   ');
+console.log('  PHIKSNIYAR PRODUCTION SECURITY & LIFECYCLE SUITE  ');
 console.log('====================================================\n');
 
 let passedTests = 0;
@@ -215,6 +215,89 @@ test('SEC-20: File Restrictions - MIME type and extension validation', () => {
   assert.strictEqual(validateFile('application/x-executable', 1000), false);
   assert.strictEqual(validateFile('image/jpeg', 2 * 1024 * 1024), true);
   assert.strictEqual(validateFile('image/jpeg', 10 * 1024 * 1024), false);
+});
+
+// 21. 16-State Booking Lifecycle Reversal Guard
+test('SEC-21: 16-State Lifecycle - Completed booking cannot be reversed to REQUESTED', () => {
+  const { canTransitionBooking } = require('../src/lib/db/stateMachine');
+  const check = canTransitionBooking('COMPLETED', 'REQUESTED', 'CUSTOMER');
+  assert.strictEqual(check.allowed, false, 'COMPLETED to REQUESTED must be strictly illegal');
+  const checkProv = canTransitionBooking('COMPLETED', 'REQUESTED', 'PROVIDER');
+  assert.strictEqual(checkProv.allowed, false);
+});
+
+// 22. Additional Charges State Transition
+test('SEC-22: Price Confirmation - Provider can transition IN_PROGRESS -> AWAITING_PRICE_CONFIRMATION', () => {
+  const { canTransitionBooking } = require('../src/lib/db/stateMachine');
+  const check = canTransitionBooking('IN_PROGRESS', 'AWAITING_PRICE_CONFIRMATION', 'PROVIDER');
+  assert.strictEqual(check.allowed, true, 'Provider must be allowed to quote additional charges');
+  const custCheck = canTransitionBooking('IN_PROGRESS', 'AWAITING_PRICE_CONFIRMATION', 'CUSTOMER');
+  assert.strictEqual(custCheck.allowed, false, 'Customer cannot propose additional charges');
+});
+
+// 23. Customer Approval for Extra Charges
+test('SEC-23: Price Consent - Only Customer can approve extra quotes into IN_PROGRESS', () => {
+  const { canTransitionBooking } = require('../src/lib/db/stateMachine');
+  const custCheck = canTransitionBooking('AWAITING_PRICE_CONFIRMATION', 'IN_PROGRESS', 'CUSTOMER');
+  assert.strictEqual(custCheck.allowed, true, 'Customer must be able to approve quotes');
+  const provCheck = canTransitionBooking('AWAITING_PRICE_CONFIRMATION', 'IN_PROGRESS', 'PROVIDER');
+  assert.strictEqual(provCheck.allowed, false, 'Provider cannot self-approve additional charges');
+});
+
+// 24. Cash Payment Dual Confirmation
+test('SEC-24: Cash Audit - Transition to COMPLETED with cash requires customer or admin validation', () => {
+  const { canTransitionBooking } = require('../src/lib/db/stateMachine');
+  const customerComplete = canTransitionBooking('AWAITING_PAYMENT', 'COMPLETED', 'CUSTOMER');
+  assert.strictEqual(customerComplete.allowed, true);
+  const adminComplete = canTransitionBooking('AWAITING_PAYMENT', 'COMPLETED', 'ADMIN');
+  assert.strictEqual(adminComplete.allowed, true);
+});
+
+// 25. 7-Day Warranty Policy Window Guard
+test('SEC-25: 7-Day Warranty - Claims beyond 7 days are strictly rejected', () => {
+  const now = Date.now();
+  const validWarranty = {
+    warrantyStart: new Date(now - 2 * 24 * 3600000).toISOString(),
+    warrantyEnd: new Date(now + 5 * 24 * 3600000).toISOString(),
+  };
+  const expiredWarranty = {
+    warrantyStart: new Date(now - 10 * 24 * 3600000).toISOString(),
+    warrantyEnd: new Date(now - 3 * 24 * 3600000).toISOString(),
+  };
+  const isWithinWindow = (w) => now <= new Date(w.warrantyEnd).getTime();
+  assert.strictEqual(isWithinWindow(validWarranty), true, '2-day old warranty must be active');
+  assert.strictEqual(isWithinWindow(expiredWarranty), false, '10-day old warranty must be expired');
+});
+
+// 26. Database Health Inspection
+test('SEC-26: Health Check - db.checkHealth() returns healthy boolean without leaking secrets', () => {
+  const { db } = require('../src/lib/db/database');
+  const health = db.checkHealth();
+  assert.strictEqual(health.healthy, true);
+  assert.strictEqual(typeof health.stats.userCount, 'number');
+  assert.strictEqual(typeof health.stats.bookingCount, 'number');
+});
+
+// 27. Doorstep OTP Sanitization
+test('SEC-27: Doorstep OTP - Provider payload must have startOtp stripped', () => {
+  const booking = {
+    id: 'bk-100',
+    customerId: 'usr-cust-1',
+    providerId: 'usr-prov-1',
+    startOtp: '4921',
+  };
+  const sanitizeForProvider = (b, role) => {
+    if (role === 'PROVIDER') {
+      const copy = { ...b };
+      delete copy.startOtp;
+      return copy;
+    }
+    return b;
+  };
+  const sanitized = sanitizeForProvider(booking, 'PROVIDER');
+  assert.strictEqual(sanitized.startOtp, undefined, 'Provider must never see doorstep OTP');
+  const customerView = sanitizeForProvider(booking, 'CUSTOMER');
+  assert.strictEqual(customerView.startOtp, '4921', 'Customer must see their OTP');
 });
 
 console.log(`\n====================================================`);

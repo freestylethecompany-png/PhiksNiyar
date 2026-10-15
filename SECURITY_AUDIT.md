@@ -1,7 +1,7 @@
-# FixNear — Comprehensive Production Security Audit
+# PhiksNiyar — Comprehensive Production Security Audit
 
 **Document Version:** 1.0.0  
-**Target Application:** FixNear (`https://fix-near-rosy.vercel.app/` / `https://fixnear.in`)  
+**Target Application:** PhiksNiyar (`https://phiksniyar.in`)  
 **Tagline:** Local help. Right when you need it.  
 **Auditor:** Senior Full-Stack Security & Application Security Engineering Team  
 **Audit Date:** 2026-10-08  
@@ -11,7 +11,7 @@
 
 ## 1. Executive Summary
 
-A comprehensive architectural and application security audit was performed on FixNear. While the application exhibits strong architectural concepts (WAL SQLite / Postgres dual persistence, typed data models, state machine foundation, and bilingual English/Telugu UI), several **Critical** and **High** security vulnerabilities were identified that must be remediated prior to commercial production launch.
+A comprehensive architectural and application security audit was performed on PhiksNiyar. While the application exhibits strong architectural concepts (WAL SQLite / Postgres dual persistence, typed data models, state machine foundation, and bilingual English/Telugu UI), several **Critical** and **High** security vulnerabilities were identified that must be remediated prior to commercial production launch.
 
 Key findings include:
 - **Broken Object-Level Authorization (BOLA/IDOR)** across bookings, delivery tracking, and AI assistant routes, exposing customer PII (full names, phone numbers, exact residential street addresses, and live GPS coordinates) to anonymous callers.

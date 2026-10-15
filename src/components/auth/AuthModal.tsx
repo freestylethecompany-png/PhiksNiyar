@@ -95,15 +95,22 @@ export default function AuthModal({ initialRole = 'CUSTOMER', onSuccess, onClose
                 flexShrink: 0,
               }}
             >
-              <img src="/sevanta-logo.png" alt="Sevanta" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <img
+                src="/phiksniyar-logo.png"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/logo.png';
+                }}
+                alt="PhiksNiyar"
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
             </div>
             <div>
               <h3 style={{ fontSize: '1.15rem' }}>
                 {step === 'PHONE' ? 'Sign in with Phone' : 'Enter 6-digit OTP'}
               </h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                <span style={{ fontWeight: 800, color: 'var(--primary)' }}>Seva</span>
-                <span style={{ fontWeight: 800, color: 'var(--secondary)' }}>nta</span> • Chilakaluripet, AP
+                <span style={{ fontWeight: 800, color: 'var(--primary)' }}>Sev</span>
+                <span style={{ fontWeight: 800, color: 'var(--secondary)' }}>anta</span> (సేవంత) • Chilakaluripet, AP
               </p>
             </div>
           </div>

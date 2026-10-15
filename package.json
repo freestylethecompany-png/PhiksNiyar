@@ -1,11 +1,12 @@
 {
-  "name": "fixnear",
+  "name": "phiksniyar",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test:security": "npx tsx scripts/security-audit-suite.js"
   },
   "dependencies": {
     "@types/leaflet": "^1.9.22",

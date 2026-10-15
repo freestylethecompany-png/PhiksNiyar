@@ -1,5 +1,5 @@
 -- ============================================================================
--- LOCALAI / FIXNEAR MARKETPLACE - PRODUCTION POSTGRESQL / SUPABASE SCHEMA
+-- SEVANTA (సేవంత) MARKETPLACE - PRODUCTION POSTGRESQL / SUPABASE SCHEMA
 -- Initial Market: Chilakaluripet, Andhra Pradesh, India (PIN: 522616)
 -- 100% Idempotent Script: Safe to execute repeatedly without errors
 -- ============================================================================
@@ -16,15 +16,25 @@ DO $$ BEGIN
     CREATE TYPE user_role AS ENUM ('CUSTOMER', 'PROVIDER', 'SUPPORT', 'ADMIN');
   ELSE
     ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'SUPPORT';
+    ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'ADMIN';
   END IF;
 END $$;
 
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'verification_status') THEN
-    CREATE TYPE verification_status AS ENUM ('PENDING', 'DOCUMENT_SUBMITTED', 'KYC_PROCESSING', 'VERIFIED', 'REJECTED', 'SUSPENDED');
+    CREATE TYPE verification_status AS ENUM (
+      'PENDING',
+      'UNDER_REVIEW',
+      'VERIFIED',
+      'REJECTED',
+      'SUSPENDED',
+      'INACTIVE',
+      'DOCUMENT_SUBMITTED',
+      'KYC_PROCESSING'
+    );
   ELSE
-    ALTER TYPE verification_status ADD VALUE IF NOT EXISTS 'DOCUMENT_SUBMITTED';
-    ALTER TYPE verification_status ADD VALUE IF NOT EXISTS 'KYC_PROCESSING';
+    ALTER TYPE verification_status ADD VALUE IF NOT EXISTS 'UNDER_REVIEW';
+    ALTER TYPE verification_status ADD VALUE IF NOT EXISTS 'INACTIVE';
   END IF;
 END $$;
 
@@ -32,18 +42,38 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'booking_status') THEN
     CREATE TYPE booking_status AS ENUM (
       'REQUESTED',
+      'MATCHING',
+      'PENDING_PROVIDER',
       'ACCEPTED',
-      'REJECTED',
+      'ON_THE_WAY',
+      'ARRIVED',
+      'OTP_PENDING',
+      'IN_PROGRESS',
+      'AWAITING_PRICE_CONFIRMATION',
+      'AWAITING_PAYMENT',
+      'COMPLETED',
       'CANCELLED',
+      'DISPUTED',
+      'WARRANTY_ACTIVE',
+      'WARRANTY_CLAIMED',
+      'CLOSED',
+      -- Backward compatibility aliases
       'SCHEDULED',
       'PROVIDER_ON_THE_WAY',
-      'ARRIVED',
-      'IN_PROGRESS',
       'PAYMENT_PENDING',
       'PAID',
-      'COMPLETED',
-      'DISPUTED'
+      'REJECTED'
     );
+  ELSE
+    ALTER TYPE booking_status ADD VALUE IF NOT EXISTS 'MATCHING';
+    ALTER TYPE booking_status ADD VALUE IF NOT EXISTS 'PENDING_PROVIDER';
+    ALTER TYPE booking_status ADD VALUE IF NOT EXISTS 'ON_THE_WAY';
+    ALTER TYPE booking_status ADD VALUE IF NOT EXISTS 'OTP_PENDING';
+    ALTER TYPE booking_status ADD VALUE IF NOT EXISTS 'AWAITING_PRICE_CONFIRMATION';
+    ALTER TYPE booking_status ADD VALUE IF NOT EXISTS 'AWAITING_PAYMENT';
+    ALTER TYPE booking_status ADD VALUE IF NOT EXISTS 'WARRANTY_ACTIVE';
+    ALTER TYPE booking_status ADD VALUE IF NOT EXISTS 'WARRANTY_CLAIMED';
+    ALTER TYPE booking_status ADD VALUE IF NOT EXISTS 'CLOSED';
   END IF;
 END $$;
 
@@ -100,12 +130,13 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS customers (
+CREATE TABLE IF NOT EXISTS customer_profiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  total_bookings INT NOT NULL DEFAULT 0,
+  default_address_id UUID,
+  total_bookings INTEGER NOT NULL DEFAULT 0,
   emergency_phone VARCHAR(20),
-  preferred_language VARCHAR(20) DEFAULT 'te',
+  preferred_language VARCHAR(10) NOT NULL DEFAULT 'te',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -116,75 +147,59 @@ CREATE TABLE IF NOT EXISTS addresses (
   title VARCHAR(50) NOT NULL DEFAULT 'Home',
   street TEXT NOT NULL,
   area_name VARCHAR(150) NOT NULL,
-  city VARCHAR(100) NOT NULL,
+  city VARCHAR(100) NOT NULL DEFAULT 'Chilakaluripet',
   state VARCHAR(100) NOT NULL DEFAULT 'Andhra Pradesh',
   pincode VARCHAR(10) NOT NULL DEFAULT '522616',
   latitude NUMERIC(9, 6) NOT NULL,
   longitude NUMERIC(9, 6) NOT NULL,
   is_default BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- ============================================================================
--- 3. PROVIDERS & CAPABILITIES
--- ============================================================================
-CREATE TABLE IF NOT EXISTS providers (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  business_name VARCHAR(200) NOT NULL,
-  bio TEXT,
-  primary_category VARCHAR(100) NOT NULL,
-  categories TEXT[] NOT NULL DEFAULT '{}',
-  subcategories TEXT[] NOT NULL DEFAULT '{}',
-  experience_years INT NOT NULL DEFAULT 1,
-  service_radius_km NUMERIC(5, 2) NOT NULL DEFAULT 10.0,
-  location_area VARCHAR(150) NOT NULL,
-  latitude NUMERIC(9, 6) NOT NULL,
-  longitude NUMERIC(9, 6) NOT NULL,
-  verification_status verification_status NOT NULL DEFAULT 'UNVERIFIED',
-  verification_documents JSONB DEFAULT '{}'::jsonb,
-  working_hours JSONB DEFAULT '{"days": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"], "startTime": "08:00", "endTime": "20:00", "isAvailableToday": true}'::jsonb,
-  visiting_charge NUMERIC(10, 2) NOT NULL DEFAULT 199.00,
-  hourly_rate NUMERIC(10, 2),
-  fixed_rates JSONB DEFAULT '{}'::jsonb,
-  rating NUMERIC(3, 2) NOT NULL DEFAULT 5.00,
-  total_reviews INT NOT NULL DEFAULT 0,
-  completed_jobs INT NOT NULL DEFAULT 0,
-  cancellation_rate NUMERIC(5, 2) NOT NULL DEFAULT 0.00,
-  response_rate NUMERIC(5, 2) NOT NULL DEFAULT 100.00,
-  avg_response_minutes INT NOT NULL DEFAULT 15,
-  portfolio_images TEXT[] DEFAULT '{}',
-  aadhaar_verified BOOLEAN NOT NULL DEFAULT false,
-  aadhaar_verified_at TIMESTAMPTZ,
-  aadhaar_hash TEXT,
-  place_verified BOOLEAN NOT NULL DEFAULT true,
-  place_verified_at TIMESTAMPTZ,
-  workshop_gps_verified BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS provider_services (
+-- ============================================================================
+-- 3. PROVIDER PROFILES & VERIFICATION
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS providers (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  provider_id UUID NOT NULL REFERENCES providers(id) ON DELETE CASCADE,
-  category VARCHAR(100) NOT NULL,
-  subcategory VARCHAR(100) NOT NULL,
-  base_price NUMERIC(10, 2) NOT NULL,
-  description TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS provider_availability (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  provider_id UUID NOT NULL REFERENCES providers(id) ON DELETE CASCADE,
-  date DATE NOT NULL,
-  slot_time VARCHAR(20) NOT NULL,
-  is_booked BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  business_name VARCHAR(150) NOT NULL,
+  bio TEXT,
+  primary_category VARCHAR(100) NOT NULL,
+  categories JSONB NOT NULL DEFAULT '[]'::jsonb,
+  subcategories JSONB NOT NULL DEFAULT '[]'::jsonb,
+  experience_years INTEGER NOT NULL DEFAULT 1,
+  service_radius_km NUMERIC(5, 2) NOT NULL DEFAULT 10.0,
+  location_area VARCHAR(150) NOT NULL,
+  latitude NUMERIC(9, 6) NOT NULL,
+  longitude NUMERIC(9, 6) NOT NULL,
+  verification_status verification_status NOT NULL DEFAULT 'PENDING',
+  aadhaar_verified BOOLEAN NOT NULL DEFAULT false,
+  aadhaar_verified_at TIMESTAMPTZ,
+  aadhaar_hash VARCHAR(128),
+  place_verified BOOLEAN NOT NULL DEFAULT true,
+  place_verified_at TIMESTAMPTZ,
+  workshop_gps_verified BOOLEAN NOT NULL DEFAULT true,
+  circumvention_risk_score NUMERIC(5, 2) NOT NULL DEFAULT 0.00,
+  circumvention_strikes INTEGER NOT NULL DEFAULT 0,
+  verification_documents JSONB NOT NULL DEFAULT '{}'::jsonb,
+  working_hours JSONB NOT NULL DEFAULT '{}'::jsonb,
+  visiting_charge NUMERIC(10, 2) NOT NULL DEFAULT 199.00,
+  hourly_rate NUMERIC(10, 2),
+  fixed_rates JSONB NOT NULL DEFAULT '{}'::jsonb,
+  rating NUMERIC(3, 2) NOT NULL DEFAULT 5.00,
+  total_reviews INTEGER NOT NULL DEFAULT 0,
+  completed_jobs INTEGER NOT NULL DEFAULT 0,
+  cancellation_rate NUMERIC(5, 2) NOT NULL DEFAULT 0.00,
+  response_rate NUMERIC(5, 2) NOT NULL DEFAULT 100.00,
+  avg_response_minutes INTEGER NOT NULL DEFAULT 15,
+  portfolio_images JSONB NOT NULL DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ============================================================================
--- 4. SERVICE REQUESTS & AI METADATA
+-- 4. SERVICE REQUESTS & INTENT PARSING
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS service_requests (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -199,16 +214,8 @@ CREATE TABLE IF NOT EXISTS service_requests (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS service_request_messages (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  request_id UUID NOT NULL REFERENCES service_requests(id) ON DELETE CASCADE,
-  sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  message TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
 -- ============================================================================
--- 5. BOOKINGS & STATE MACHINE
+-- 5. BOOKINGS & 16-STATE ENGINE
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS bookings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -228,8 +235,21 @@ CREATE TABLE IF NOT EXISTS bookings (
   platform_commission_percent NUMERIC(5, 2) NOT NULL DEFAULT 10.00,
   platform_commission_amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
   provider_payout_amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
-  start_job_otp VARCHAR(6),
-  otp_verified BOOLEAN NOT NULL DEFAULT false,
+  start_otp VARCHAR(6),
+  otp_verified_at TIMESTAMPTZ,
+  start_otp_attempts INTEGER NOT NULL DEFAULT 0,
+  cancellation_reason TEXT,
+  cancellation_flagged_collusion BOOLEAN NOT NULL DEFAULT false,
+  price_matched_amount NUMERIC(10, 2),
+  additional_charges_requested NUMERIC(10, 2),
+  additional_charges_reason TEXT,
+  additional_charges_approved BOOLEAN NOT NULL DEFAULT false,
+  additional_charges_approved_at TIMESTAMPTZ,
+  cash_payment_reported_amount NUMERIC(10, 2),
+  cash_payment_status VARCHAR(50) NOT NULL DEFAULT 'NONE',
+  cash_payment_confirmed_at TIMESTAMPTZ,
+  cash_payment_reported_by UUID REFERENCES users(id),
+  warranty_id UUID,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -244,7 +264,44 @@ CREATE TABLE IF NOT EXISTS booking_status_history (
 );
 
 -- ============================================================================
--- 6. PAYMENTS & PAYOUTS
+-- 6. WARRANTIES & REWORK GUARANTEE (7-Day Doorstep Guarantee)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS warranties (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  booking_id UUID UNIQUE NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  customer_id UUID NOT NULL REFERENCES users(id),
+  provider_id UUID NOT NULL REFERENCES providers(id),
+  service_category VARCHAR(100) NOT NULL,
+  warranty_start TIMESTAMPTZ NOT NULL,
+  warranty_end TIMESTAMPTZ NOT NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
+  claim_reason TEXT,
+  claimed_at TIMESTAMPTZ,
+  resolution_notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================================
+-- 7. DISPUTES & MEDIATION
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS disputes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  booking_id UUID NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  raised_by UUID NOT NULL REFERENCES users(id),
+  raised_by_role user_role NOT NULL,
+  category VARCHAR(100) NOT NULL,
+  description TEXT NOT NULL,
+  evidence_urls JSONB DEFAULT '[]'::jsonb,
+  status VARCHAR(50) NOT NULL DEFAULT 'OPEN',
+  resolution_notes TEXT,
+  refund_amount NUMERIC(10, 2),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================================
+-- 8. PAYMENTS & COMMISSIONS
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS payments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -258,88 +315,52 @@ CREATE TABLE IF NOT EXISTS payments (
   payment_status payment_status NOT NULL DEFAULT 'PENDING',
   transaction_ref VARCHAR(100),
   paid_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS provider_payouts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  provider_id UUID NOT NULL REFERENCES providers(id),
-  amount NUMERIC(10, 2) NOT NULL,
-  status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
-  payout_reference VARCHAR(100),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ============================================================================
--- 7. REVIEWS & DISPUTES
+-- 9. REVIEWS & AUDIT
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS reviews (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   booking_id UUID UNIQUE NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
   customer_id UUID NOT NULL REFERENCES users(id),
+  customer_name VARCHAR(150) NOT NULL,
   provider_id UUID NOT NULL REFERENCES providers(id),
-  rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
-  quality_rating INT NOT NULL CHECK (quality_rating >= 1 AND quality_rating <= 5),
-  professionalism_rating INT NOT NULL CHECK (professionalism_rating >= 1 AND professionalism_rating <= 5),
-  value_rating INT NOT NULL CHECK (value_rating >= 1 AND value_rating <= 5),
+  rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  quality_rating INTEGER NOT NULL DEFAULT 5,
+  professionalism_rating INTEGER NOT NULL DEFAULT 5,
+  value_rating INTEGER NOT NULL DEFAULT 5,
   comment TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS disputes (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  booking_id UUID NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
-  opened_by_user_id UUID NOT NULL REFERENCES users(id),
-  reason TEXT NOT NULL,
-  status VARCHAR(50) NOT NULL DEFAULT 'OPEN',
-  resolution_notes TEXT,
-  resolved_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS reports (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  reported_by_id UUID NOT NULL REFERENCES users(id),
-  target_user_id UUID NOT NULL REFERENCES users(id),
-  category VARCHAR(100) NOT NULL,
-  details TEXT NOT NULL,
-  status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- ============================================================================
--- 8. PLATFORM SETTINGS & AUDIT LOGS
--- ============================================================================
-CREATE TABLE IF NOT EXISTS platform_settings (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  commission_percent NUMERIC(5, 2) NOT NULL DEFAULT 10.00,
-  matching_weights JSONB NOT NULL DEFAULT '{
-    "categoryMatch": 0.30,
-    "distance": 0.20,
-    "availability": 0.15,
-    "rating": 0.10,
-    "completionRate": 0.10,
-    "responseRate": 0.05,
-    "priceCompatibility": 0.10
-  }'::jsonb,
-  default_search_radius_km NUMERIC(5, 2) NOT NULL DEFAULT 15.00,
-  upi_vpa VARCHAR(100) NOT NULL DEFAULT 'sevanta.payments@okhdfcbank',
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
 CREATE TABLE IF NOT EXISTS audit_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  actor_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  actor_id UUID,
   actor_role user_role NOT NULL,
   action VARCHAR(100) NOT NULL,
   target_entity VARCHAR(100) NOT NULL,
   target_id VARCHAR(100) NOT NULL,
-  details JSONB DEFAULT '{}'::jsonb,
+  details JSONB NOT NULL DEFAULT '{}'::jsonb,
   timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS platform_settings (
+  id VARCHAR(50) PRIMARY KEY DEFAULT 'global',
+  commission_percent NUMERIC(5, 2) NOT NULL DEFAULT 10.00,
+  matching_weights JSONB NOT NULL,
+  default_search_radius_km NUMERIC(5, 2) NOT NULL DEFAULT 15.00,
+  currency VARCHAR(10) NOT NULL DEFAULT 'INR',
+  support_phone VARCHAR(20) NOT NULL DEFAULT '+91 8647 254999',
+  support_email VARCHAR(100) NOT NULL DEFAULT 'support@sevanta.in',
+  upi_vpa VARCHAR(100) NOT NULL DEFAULT 'sevanta.payments@okhdfcbank',
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- ============================================================================
--- 9. LIVE DELIVERY TRACKING & OTP AUTH
+-- 10. LIVE DELIVERY TRACKING & OTP
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS delivery_tracking (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -365,7 +386,7 @@ CREATE TABLE IF NOT EXISTS otp_codes (
 );
 
 -- ============================================================================
--- 10. INDEXES FOR HIGH-EFFICIENCY QUERIES
+-- 11. INDEXES FOR HIGH-EFFICIENCY LOOKUPS & CONCURRENCY
 -- ============================================================================
 CREATE INDEX IF NOT EXISTS idx_providers_category ON providers(primary_category);
 CREATE INDEX IF NOT EXISTS idx_providers_verification ON providers(verification_status);
@@ -373,17 +394,23 @@ CREATE INDEX IF NOT EXISTS idx_providers_geo ON providers(latitude, longitude);
 CREATE INDEX IF NOT EXISTS idx_bookings_customer ON bookings(customer_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_provider ON bookings(provider_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
+CREATE INDEX IF NOT EXISTS idx_bookings_created ON bookings(created_at);
+CREATE INDEX IF NOT EXISTS idx_warranties_booking ON warranties(booking_id);
+CREATE INDEX IF NOT EXISTS idx_warranties_customer ON warranties(customer_id);
+CREATE INDEX IF NOT EXISTS idx_disputes_booking ON disputes(booking_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_provider ON reviews(provider_id);
 CREATE INDEX IF NOT EXISTS idx_service_areas_city ON service_areas(city_id);
 CREATE INDEX IF NOT EXISTS idx_delivery_tracking_order ON delivery_tracking(order_id);
 
 -- ============================================================================
--- 11. ROW LEVEL SECURITY (RLS) POLICIES
+-- 12. ROW LEVEL SECURITY (RLS) POLICIES
 -- ============================================================================
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customer_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE providers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE warranties ENABLE ROW LEVEL SECURITY;
+ALTER TABLE disputes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
@@ -398,4 +425,19 @@ CREATE POLICY "Users read own bookings" ON bookings
   FOR SELECT USING (
     auth.uid() = customer_id OR 
     auth.uid() IN (SELECT user_id FROM providers WHERE id = bookings.provider_id)
+  );
+
+DROP POLICY IF EXISTS "Users read own warranties" ON warranties;
+CREATE POLICY "Users read own warranties" ON warranties
+  FOR SELECT USING (
+    auth.uid() = customer_id OR 
+    auth.uid() IN (SELECT user_id FROM providers WHERE id = warranties.provider_id)
+  );
+
+DROP POLICY IF EXISTS "Users read own disputes" ON disputes;
+CREATE POLICY "Users read own disputes" ON disputes
+  FOR SELECT USING (
+    auth.uid() = raised_by OR
+    auth.uid() IN (SELECT customer_id FROM bookings WHERE id = disputes.booking_id) OR
+    auth.uid() IN (SELECT p.user_id FROM providers p JOIN bookings b ON b.provider_id = p.id WHERE b.id = disputes.booking_id)
   );

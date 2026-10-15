@@ -145,7 +145,7 @@ export default function AdminDashboard({ currentUser, onAuthenticateAdmin, onGoH
             Admin Privileges Required
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.5, marginBottom: '1.5rem' }}>
-            The Sevanta Admin Console is strictly protected. You must be signed in as a verified Platform Administrator to audit transactions, approve local service providers, and adjust commission rates.
+            The PhiksNiyar Admin Console is strictly protected. You must be signed in as a verified Platform Administrator to audit transactions, approve local service providers, and adjust commission rates.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {onAuthenticateAdmin && (
@@ -159,7 +159,7 @@ export default function AdminDashboard({ currentUser, onAuthenticateAdmin, onGoH
                 style={{ width: '100%', justifyContent: 'center', padding: '0.85rem' }}
               >
                 <Shield size={18} />
-                <span>Authenticate as Sevanta Admin (+91 90000 00001)</span>
+                <span>Authenticate as PhiksNiyar Admin (+91 90000 00001)</span>
               </button>
             )}
             {onGoHome && (
@@ -210,10 +210,17 @@ export default function AdminDashboard({ currentUser, onAuthenticateAdmin, onGoH
               <Shield size={18} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <img src="/sevanta-logo.png" alt="Sevanta" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+              <img
+                src="/phiksniyar-logo.png"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/logo.png';
+                }}
+                alt="PhiksNiyar"
+                style={{ width: '32px', height: '32px', objectFit: 'contain' }}
+              />
               <h1 style={{ fontSize: '1.6rem' }}>
-                <span style={{ color: 'var(--primary)' }}>Seva</span>
-                <span style={{ color: 'var(--secondary)' }}>nta</span> Admin Command Center
+                <span style={{ color: 'var(--primary)' }}>Phiks</span>
+                <span style={{ color: 'var(--secondary)' }}>Niyar</span> Admin Command Center
               </h1>
             </div>
           </div>

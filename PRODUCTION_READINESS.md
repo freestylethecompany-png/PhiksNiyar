@@ -1,9 +1,9 @@
-# FixNear — Production Readiness & Pre-Launch Hardening Report
+# PhiksNiyar — Production Readiness & Pre-Launch Hardening Report
 
-**Application:** FixNear (ఫిక్స్‌నియర్)  
+**Application:** PhiksNiyar (ఫిక్స్ నియర్)  
 **Tagline:** *Local help. Right when you need it.*  
 **Target Market:** Chilakaluripet, Palnadu District, Andhra Pradesh (PIN: 522616)  
-**Production URL:** [https://fix-near-rosy.vercel.app](https://fix-near-rosy.vercel.app) / [https://fixnear.in](https://fixnear.in)  
+**Production URL:** [https://phiksniyar.in](https://phiksniyar.in)  
 **Status:** Hardened for Production Launch  
 **Report Date:** October 2026  
 
@@ -11,7 +11,7 @@
 
 ## 1. Executive Summary
 
-This document certifies that FixNear has undergone comprehensive full-stack security hardening and pre-launch architectural remediation across all 30 phases outlined in the master hardening directive.
+This document certifies that PhiksNiyar has undergone comprehensive full-stack security hardening and pre-launch architectural remediation across all 30 phases outlined in the master hardening directive.
 
 All **Critical** and **High** vulnerabilities identified during the audit—including Broken Object-Level Authorization (BOLA/IDOR), unauthenticated Doorstep OTP exposure, fake client Aadhaar verification bypass, client-controlled role escalation, payment signature spoofing, synthetic data contamination, and unauthenticated AI assistant queries—have been completely remediated.
 
@@ -150,7 +150,7 @@ To transition from the current staging/testing setup to full commercial operatio
    - **Environment Variables:** `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
 
 4. **Authorized KYC / DigiLocker Partner (Optional Phase 2)**:
-   - **Current State:** Masked ID reference + trade credential uploads reviewed manually by the FixNear admin team.
+   - **Current State:** Masked ID reference + trade credential uploads reviewed manually by the PhiksNiyar admin team.
    - **Requirement:** For automated UIDAI instant verification, contract with a certified KYC aggregator (e.g., Cashfree Verification Suite, Bureau.id, or DigiLocker API).
 
 ---
@@ -158,13 +158,13 @@ To transition from the current staging/testing setup to full commercial operatio
 ## 5. Issues Requiring Legal & Compliance Review
 
 1. **Digital Personal Data Protection (DPDP) Act, 2023**:
-   - FixNear operates as a "Data Fiduciary" for customer home addresses, phone numbers, and location telemetry.
+   - PhiksNiyar operates as a "Data Fiduciary" for customer home addresses, phone numbers, and location telemetry.
    - Technicians' government ID references must be stored only for legitimate business and fraud-prevention purposes.
    - Explicit consent check has been added to the onboarding modal and checkout flows; a formal Data Protection Officer (DPO) contact should be added to `src/app/privacy/page.tsx`.
 
 2. **Aadhaar Act Regulations (Aadhaar Act 2016 & UIDAI Circulars)**:
    - Storing raw 12-digit Aadhaar numbers without an authorized UIDAI license or offline Aadhaar XML verification is unlawful in India.
-   - FixNear's current implementation is compliant: raw numbers are masked, only one-way cryptographic HMACs are retained for fraud detection, and no raw identity cards are publicly accessible.
+   - PhiksNiyar's current implementation is compliant: raw numbers are masked, only one-way cryptographic HMACs are retained for fraud detection, and no raw identity cards are publicly accessible.
 
 3. **Consumer Protection (E-Commerce) Rules, 2020**:
    - Marketplace platforms must disclose clear grievance redressal mechanisms, partner trade licenses, and clear dispute resolution timeframes.
@@ -177,7 +177,7 @@ To transition from the current staging/testing setup to full commercial operatio
 1. **Serverless In-Memory Rate Limiting on Vercel**:
    - The in-memory sliding window rate limiter (`rateLimiter.ts`) protects individual serverless function instances. In highly distributed multi-region traffic spikes, a centralized distributed store (e.g., Upstash Redis) is recommended for cluster-wide synchronization.
 2. **Technician Cash Collusion (Platform Circumvention)**:
-   - While FixNear tracks `circumventionRiskScore` and limits technician cancellations post-arrival, physical off-platform cash transactions remain an inherent marketplace challenge. The Doorstep Start-OTP and post-job review mechanism mitigate this risk.
+   - While PhiksNiyar tracks `circumventionRiskScore` and limits technician cancellations post-arrival, physical off-platform cash transactions remain an inherent marketplace challenge. The Doorstep Start-OTP and post-job review mechanism mitigate this risk.
 3. **Emergency Support & SOS Escalation**:
    - The platform provides direct customer care and local police integration for Chilakaluripet (08647-253333 / 112). Staff training is recommended to ensure rapid response to safety alerts.
 
@@ -189,12 +189,12 @@ Add these environment variables to the production Vercel project settings (`Sett
 
 ```bash
 # ==========================================
-# FIXNEAR PRODUCTION ENVIRONMENT CONFIGURATION
+# PHIKSNIYAR PRODUCTION ENVIRONMENT CONFIGURATION
 # ==========================================
 
 # 1. CORE APPLICATION ENVIRONMENT
 NODE_ENV=production
-NEXT_PUBLIC_APP_URL=https://fixnear.in
+NEXT_PUBLIC_APP_URL=https://phiksniyar.in
 ALLOW_DEV_SEED=false
 
 # 2. SESSION AUTHENTICATION (CRITICAL)
@@ -236,7 +236,7 @@ NEXT_PUBLIC_POLICE_EMERGENCY=112
 ### Deployment Phase
 - [ ] Push latest security-hardened commits to `main` branch on GitHub.
 - [ ] Monitor Vercel build log for successful compilation and static route generation.
-- [ ] Confirm HTTP response headers on production URL using `curl -I https://fixnear.in`:
+- [ ] Confirm HTTP response headers on production URL using `curl -I https://phiksniyar.in`:
   - `X-Frame-Options: DENY`
   - `X-Content-Type-Options: nosniff`
   - `Strict-Transport-Security`
@@ -252,10 +252,10 @@ NEXT_PUBLIC_POLICE_EMERGENCY=112
 
 ## 9. Database Migration Requirements
 
-When connecting FixNear to Supabase or a managed PostgreSQL instance:
+When connecting PhiksNiyar to Supabase or a managed PostgreSQL instance:
 
 1. Open the Supabase SQL Editor.
-2. Execute [`schema.sql`](file:///c:/Users/surya/OneDrive/Desktop/Testing%20Idea/schema.sql) from the repository root.
+2. Execute [`schema.sql`](./src/lib/db/schema.sql) from the repository root.
 3. Verify that all 11 tables are created:
    - `users`
    - `customer_profiles`
@@ -286,7 +286,7 @@ A dedicated test suite has been created in `scripts/security-audit-suite.js` cov
 ### Test Execution Results
 ```
 ====================================================
-   FIXNEAR PRODUCTION SECURITY AUDIT TEST SUITE   
+   PHIKSNIYAR PRODUCTION SECURITY AUDIT TEST SUITE   
 ====================================================
 
   ✓ [PASS] SEC-01: BOLA/IDOR - Non-admin user cannot access alien booking
@@ -319,4 +319,4 @@ A dedicated test suite has been created in `scripts/security-audit-suite.js` cov
 
 ## 11. Conclusion
 
-FixNear is now structurally hardened, compliant with data protection standards, protected against common OWASP API security risks (BOLA/IDOR, broken authentication, mass assignment, injection), and ready for commercial deployment in Chilakaluripet, AP.
+PhiksNiyar is now structurally hardened, compliant with data protection standards, protected against common OWASP API security risks (BOLA/IDOR, broken authentication, mass assignment, injection), and ready for commercial deployment in Chilakaluripet, AP.

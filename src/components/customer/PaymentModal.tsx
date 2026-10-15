@@ -35,8 +35,8 @@ export default function PaymentModal({
   const providerPayout = amount - platformFee;
 
   // Real UPI deep link spec
-  const upiVpa = 'sevanta.payments@okhdfcbank';
-  const upiUri = `upi://pay?pa=${upiVpa}&pn=Sevanta%20Marketplace&am=${amount}&cu=INR&tn=Booking_${booking.id}`;
+  const upiVpa = 'phiksniyar.payments@okhdfcbank';
+  const upiUri = `upi://pay?pa=${upiVpa}&pn=PhiksNiyar%20Marketplace&am=${amount}&cu=INR&tn=Booking_${booking.id}`;
 
   const handleProcessPayment = async () => {
     setIsProcessing(true);
@@ -69,7 +69,7 @@ export default function PaymentModal({
               key: orderData.keyId,
               amount: orderData.amount,
               currency: orderData.currency || 'INR',
-              name: 'Sevanta Services',
+              name: 'PhiksNiyar Services',
               description: `Booking #${booking.id} (${booking.category})`,
               order_id: orderData.orderId,
               prefill: {
@@ -438,7 +438,7 @@ export default function PaymentModal({
                 <strong>₹{providerPayout}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Sevanta Platform Commission (10%)</span>
+                <span>PhiksNiyar Platform Commission (10%)</span>
                 <span>₹{platformFee}</span>
               </div>
             </div>

@@ -35,7 +35,7 @@ function TrackingPageContent() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedLang = localStorage.getItem('fixnear_lang') as Language;
+      const savedLang = (localStorage.getItem('phiksniyar_lang') || localStorage.getItem('sevanta_lang') || localStorage.getItem('fixnear_lang')) as Language;
       if (savedLang === 'en' || savedLang === 'te') {
         setCurrentLang(savedLang);
       }
@@ -274,7 +274,7 @@ function TrackingPageContent() {
               onClick={() => {
                 const next = currentLang === 'en' ? 'te' : 'en';
                 setCurrentLang(next);
-                localStorage.setItem('fixnear_lang', next);
+                localStorage.setItem('phiksniyar_lang', next);
               }}
               style={{
                 padding: '6px 10px',
@@ -602,7 +602,7 @@ function TrackingPageContent() {
 
 export default function TrackingPage() {
   return (
-    <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center' }}>Loading Sevanta Delivery Tracking...</div>}>
+    <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center' }}>Loading PhiksNiyar Delivery Tracking...</div>}>
       <TrackingPageContent />
     </Suspense>
   );

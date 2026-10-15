@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline — PhiksNiyar (ఫిక్స్ నియర్) Chilakaluripet</title>
+  <style>
+    :root {
+      --primary: #182B49;
+      --secondary: #0F9D72;
+      --bg: #F8FAFC;
+      --surface: #FFFFFF;
+      --text-main: #111827;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 12px 32px rgba(24, 43, 73, 0.08);
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      object-fit: contain;
+    }
+    .brand-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .brand-accent {
+      color: var(--secondary);
+    }
+    .offline-icon {
+      width: 64px;
+      height: 64px;
+      background: #FEF2F2;
+      border: 1px solid #FEE2E2;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem auto;
+      color: #DC2626;
+      font-size: 1.75rem;
+    }
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--text-main);
+    }
+    .telugu-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 1rem;
+    }
+    p {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      line-height: 1.55;
+      margin-bottom: 1.5rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      background: var(--primary);
+      color: #FFFFFF;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 0.8rem 1.6rem;
+      border-radius: 9999px;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.2s ease;
+      text-decoration: none;
+    }
+    .btn:hover {
+      background: #122138;
+    }
+    .helpdesk {
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .helpdesk strong {
+      color: var(--primary);
+      display: block;
+      margin-top: 0.25rem;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo-container">
+      <img src="/phiksniyar-logo.png" onerror="this.src='/logo.png'" alt="PhiksNiyar Logo" class="logo-icon" />
+      <div class="brand-title">
+        <span>Phiks</span><span class="brand-accent">Niyar</span> (ఫిక్స్ నియర్)
+      </div>
+    </div>
+
+    <div class="offline-icon">📡</div>
+
+    <h1>You are currently offline</h1>
+    <div class="telugu-text">ఇంటర్నెట్ కనెక్షన్ అందుబాటులో లేదు</div>
+
+    <p>
+      Please check your Wi-Fi or mobile data network. Once reconnected, PhiksNiyar will restore your live booking updates and instant local matching in Chilakaluripet.
+    </p>
+
+    <button class="btn" onclick="retryConnection()">
+      🔄 Check Connection & Retry (మళ్లీ ప్రయత్నించండి)
+    </button>
+
+    <div class="helpdesk">
+      For urgent local emergency repairs in Chilakaluripet:
+      <strong>📞 +91 8647 254999</strong>
+    </div>
+  </div>
+
+  <script>
+    function retryConnection() {
+      if (navigator.onLine) {
+        window.location.reload();
+      } else {
+        alert('Still offline. Please check your data connection and tap Retry.');
+      }
+    }
+    window.addEventListener('online', function() {
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>

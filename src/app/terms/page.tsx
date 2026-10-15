@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ShieldAlert, CheckCircle, FileText } from 'lucide-react';
+import PhiksNiyarLogo from '@/components/common/PhiksNiyarLogo';
 
 export default function TermsPage() {
   return (
@@ -16,7 +17,7 @@ export default function TermsPage() {
           marginBottom: '1.5rem',
         }}
       >
-        <ArrowLeft size={16} /> Back to Sevanta Home
+        <ArrowLeft size={16} /> Back to PhiksNiyar Home
       </Link>
 
       <div
@@ -28,11 +29,10 @@ export default function TermsPage() {
           boxShadow: 'var(--shadow-sm)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-          <img src="/sevanta-logo.png" alt="Sevanta" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
-          <h1 style={{ fontSize: '2rem' }}>
-            <span style={{ color: 'var(--primary)' }}>Seva</span>
-            <span style={{ color: 'var(--secondary)' }}>nta</span> Terms of Service
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+          <PhiksNiyarLogo variant="full" size="md" withTagline={false} />
+          <h1 style={{ fontSize: '1.75rem', margin: 0, fontWeight: 800, color: 'var(--text-primary)' }}>
+            Terms of Service
           </h1>
         </div>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '2rem' }}>
@@ -45,9 +45,9 @@ export default function TermsPage() {
               1. Platform Nature & Facilitator Role
             </h2>
             <p>
-              Sevanta (సేవంత, formerly FixNear) is an AI-assisted hyperlocal marketplace platform connecting independent local service professionals
+              PhiksNiyar (ఫిక్స్ నియర్) is an AI-assisted hyperlocal marketplace platform connecting independent local service professionals
               (technicians, plumbers, electricians, mechanics) in Chilakaluripet, Andhra Pradesh with
-              customers seeking home services. <strong>Sevanta is a technology facilitator and does not employ technicians directly.</strong> All service professionals are independent local trade vendors.
+              customers seeking home services. <strong>PhiksNiyar is a technology facilitator and does not employ technicians directly.</strong> All service professionals are independent local trade vendors.
             </p>
           </section>
 
@@ -56,7 +56,7 @@ export default function TermsPage() {
               2. Identity Verification & Trust Protection
             </h2>
             <p>
-              Sevanta validates provider identity using government identity checks, trade credential audits, cryptographic identity hashing, and 25 km geofence boundary checks in Chilakaluripet. While Sevanta awards verified trust badges, customers receive 7-Day Free Rework Warranties exclusively when bookings and payments are kept on the Sevanta platform.
+              PhiksNiyar validates provider identity using government identity checks, trade credential audits, cryptographic identity hashing, and 25 km geofence boundary checks in Chilakaluripet. While PhiksNiyar awards verified trust badges, customers receive 7-Day Free Rework Warranties exclusively when bookings and payments are kept on the PhiksNiyar platform.
             </p>
           </section>
 
@@ -83,7 +83,7 @@ export default function TermsPage() {
               5. Local Helpdesk & Contact
             </h2>
             <p>
-              For assistance in Chilakaluripet, Palnadu District: Phone: +91 8647 254999 | Email: support@sevanta.in (or support@fixnear.in)
+              For assistance in Chilakaluripet, Palnadu District: Phone: +91 8647 254999 | Email: support@phiksniyar.in
             </p>
           </section>
         </div>

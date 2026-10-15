@@ -10,6 +10,7 @@ export async function POST() {
     maxAge: 0,
     expires: new Date(0),
   };
+  response.cookies.set('phiksniyar_session', '', cookieOptions);
   response.cookies.set('sevanta_session', '', cookieOptions);
   response.cookies.set('fixnear_session', '', cookieOptions);
   response.cookies.set('localai_session', '', cookieOptions);

@@ -1,58 +1,66 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import PwaRegister from '@/components/common/PwaRegister';
 
-export const viewport = {
+export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
+  themeColor: '#182B49',
 };
 
 export const metadata: Metadata = {
-  title: 'Sevanta (సేవంత) — Local help. Right when you need it. | Chilakaluripet, Andhra Pradesh',
+  title: 'PhiksNiyar (ఫిక్స్ నియర్) — Local help. Right when you need it. | Chilakaluripet, Andhra Pradesh',
   description:
-    'Sevanta (సేవంత) connects you with verified local AC technicians, electricians, plumbers, and mechanics near you in Chilakaluripet with instant AI matching, upfront pricing, and UPI payments.',
+    'PhiksNiyar (ఫిక్స్ నియర్) connects households with verified local AC technicians, electricians, plumbers, and mechanics near you in Chilakaluripet with instant AI matching, upfront pricing, 7-day warranty protection, and UPI payments.',
   keywords: [
-    'Sevanta',
-    'Sevanta Chilakaluripet',
-    'సేవంత',
-    'సేవంత చిలకలూరిపేట',
+    'PhiksNiyar',
+    'PhiksNiyar Chilakaluripet',
+    'ఫిక్స్ నియర్',
+    'ఫిక్స్ నియర్ చిలకలూరిపేట',
     'Local help. Right when you need it.',
     'Chilakaluripet local services',
     'AC repair Chilakaluripet',
     'electrician Chilakaluripet',
     'plumber Chilakaluripet',
     'bike mechanic Chilakaluripet',
-    'FixNear',
+    'Andhra Pradesh hyperlocal services',
   ],
-  authors: [{ name: 'Sevanta Technologies' }],
-  metadataBase: new URL('https://fixnear.in'),
+  authors: [{ name: 'PhiksNiyar Technologies' }],
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://phiksniyar.in'),
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'PhiksNiyar',
+  },
   openGraph: {
-    title: 'Sevanta (సేవంత) — Local help. Right when you need it.',
+    title: 'PhiksNiyar (ఫిక్స్ నియర్) — Local help. Right when you need it.',
     description:
-      'Sevanta connects households with verified local AC technicians, electricians, plumbers, and mechanics in Chilakaluripet with instant AI matching and UPI payments.',
-    url: 'https://fixnear.in',
-    siteName: 'Sevanta',
+      'PhiksNiyar connects households with verified local AC technicians, electricians, plumbers, and mechanics in Chilakaluripet with instant AI matching and UPI payments.',
+    url: 'https://phiksniyar.in',
+    siteName: 'PhiksNiyar',
     locale: 'en_IN',
     type: 'website',
     images: [
       {
-        url: '/sevanta-logo.png',
+        url: '/phiksniyar-logo.png',
         width: 1024,
         height: 1024,
-        alt: 'Sevanta — Local help. Right when you need it.',
+        alt: 'PhiksNiyar — Local help. Right when you need it.',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Sevanta (సేవంత) — Local help. Right when you need it.',
+    title: 'PhiksNiyar (ఫిక్స్ నియర్) — Local help. Right when you need it.',
     description: 'AI-powered local services marketplace in Chilakaluripet, AP.',
-    images: ['/sevanta-logo.png'],
+    images: ['/phiksniyar-logo.png'],
   },
   icons: {
-    icon: '/sevanta-logo.png',
-    shortcut: '/sevanta-logo.png',
-    apple: '/sevanta-logo.png',
+    icon: '/phiksniyar-logo.png',
+    shortcut: '/phiksniyar-logo.png',
+    apple: '/phiksniyar-logo.png',
   },
 };
 
@@ -65,9 +73,18 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
-        <link rel="icon" href="/sevanta-logo.png" />
+        <link rel="icon" href="/phiksniyar-logo.png" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/phiksniyar-logo.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="PhiksNiyar" />
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        {children}
+        <PwaRegister />
+      </body>
     </html>
   );
 }

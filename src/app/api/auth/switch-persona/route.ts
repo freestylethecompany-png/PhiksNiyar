@@ -34,6 +34,14 @@ export async function POST(request: Request) {
       user,
     });
 
+    response.cookies.set('phiksniyar_session', token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 30 * 24 * 60 * 60,
+    });
+
     response.cookies.set('fixnear_session', token, {
       httpOnly: true,
       secure: isProduction,

@@ -159,7 +159,7 @@ export async function POST(request: Request) {
         {
           status: 'REQUESTED',
           timestamp: new Date().toISOString(),
-          note: `Booking requested by customer via Sevanta`,
+          note: `Booking requested by customer via PhiksNiyar`,
           updatedByRole: 'CUSTOMER',
         },
       ],
@@ -215,6 +215,10 @@ export async function PATCH(request: Request) {
       cancellationReason,
       isCollusion,
       startOtpInput,
+      proposeAdditionalCharges,
+      approveAdditionalCharges,
+      reportCashPayment,
+      confirmCashPayment,
     } = body;
 
     if (!bookingId) {
@@ -245,7 +249,234 @@ export async function PATCH(request: Request) {
     // Never trust client-supplied actorRole; use verified session role
     const effectiveRole = session.role;
 
-    // 2. Safe Price Matching (Anti-Circumvention Protection)
+    // 2. Propose Additional Charges (Provider quotes extra parts/labor)
+    if (proposeAdditionalCharges) {
+      if (!isAssignedProvider && !isAdmin) {
+        return NextResponse.json(
+          { error: 'Only the assigned provider can propose additional charges.' },
+          { status: 403 }
+        );
+      }
+      const extraAmt = Number(proposeAdditionalCharges.amount);
+      if (isNaN(extraAmt) || extraAmt <= 0 || extraAmt > 50000) {
+        return NextResponse.json(
+          { error: 'Invalid additional charges amount (must be positive, max ₹50,000).' },
+          { status: 400 }
+        );
+      }
+
+      booking.additionalCharges = {
+        proposedAmount: extraAmt,
+        reason: String(proposeAdditionalCharges.reason || 'Additional parts / repair scope').slice(0, 300),
+        customerApproved: false,
+      };
+      booking.status = 'AWAITING_PRICE_CONFIRMATION';
+      booking.updatedAt = new Date().toISOString();
+      booking.statusHistory.push({
+        status: 'AWAITING_PRICE_CONFIRMATION',
+        timestamp: new Date().toISOString(),
+        note: `Technician proposed additional ₹${extraAmt} (${booking.additionalCharges.reason}). Awaiting customer approval.`,
+        updatedByRole: effectiveRole,
+      });
+      db.saveBooking(booking);
+
+      db.addAuditLog({
+        id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        actorId: session.userId,
+        actorRole: effectiveRole,
+        action: 'ADDITIONAL_CHARGES_PROPOSED',
+        targetEntity: 'BOOKING',
+        targetId: booking.id,
+        details: { proposedAmount: extraAmt, reason: booking.additionalCharges.reason },
+        timestamp: new Date().toISOString(),
+      });
+
+      return NextResponse.json({
+        success: true,
+        booking,
+        message: 'Additional charges submitted for customer approval.',
+      });
+    }
+
+    // 3. Approve / Reject Additional Charges (Customer explicit consent)
+    if (approveAdditionalCharges !== undefined) {
+      if (!isCustomer && !isAdmin) {
+        return NextResponse.json(
+          { error: 'Only the customer or administrator can approve or reject additional charges.' },
+          { status: 403 }
+        );
+      }
+      if (!booking.additionalCharges) {
+        return NextResponse.json(
+          { error: 'No pending additional charges found on this booking.' },
+          { status: 400 }
+        );
+      }
+
+      if (approveAdditionalCharges === true) {
+        booking.additionalCharges.customerApproved = true;
+        booking.additionalCharges.approvedAt = new Date().toISOString();
+        const baseAmount = booking.pricing.finalAmount || booking.pricing.estimatedAmount;
+        const newTotal = baseAmount + booking.additionalCharges.proposedAmount;
+        booking.pricing.finalAmount = newTotal;
+        const comm = Math.round(((newTotal * booking.pricing.platformCommissionPercent) / 100) * 100) / 100;
+        booking.pricing.platformCommissionAmount = comm;
+        booking.pricing.providerPayoutAmount = Math.round((newTotal - comm) * 100) / 100;
+        booking.status = 'IN_PROGRESS';
+        booking.statusHistory.push({
+          status: 'IN_PROGRESS',
+          timestamp: new Date().toISOString(),
+          note: `Customer approved additional ₹${booking.additionalCharges.proposedAmount}. New total: ₹${newTotal}.`,
+          updatedByRole: 'CUSTOMER',
+        });
+      } else {
+        booking.status = 'IN_PROGRESS';
+        booking.statusHistory.push({
+          status: 'IN_PROGRESS',
+          timestamp: new Date().toISOString(),
+          note: `Customer declined additional charges of ₹${booking.additionalCharges.proposedAmount}.`,
+          updatedByRole: 'CUSTOMER',
+        });
+        delete booking.additionalCharges;
+      }
+
+      booking.updatedAt = new Date().toISOString();
+      db.saveBooking(booking);
+
+      db.addAuditLog({
+        id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        actorId: session.userId,
+        actorRole: effectiveRole,
+        action: approveAdditionalCharges ? 'ADDITIONAL_CHARGES_APPROVED' : 'ADDITIONAL_CHARGES_DECLINED',
+        targetEntity: 'BOOKING',
+        targetId: booking.id,
+        details: { approved: approveAdditionalCharges },
+        timestamp: new Date().toISOString(),
+      });
+
+      return NextResponse.json({
+        success: true,
+        booking,
+        message: approveAdditionalCharges ? 'Additional charges approved.' : 'Additional charges declined.',
+      });
+    }
+
+    // 4. Report Cash Payment (Provider reports physical cash received)
+    if (reportCashPayment) {
+      if (!isAssignedProvider && !isAdmin) {
+        return NextResponse.json(
+          { error: 'Only the assigned provider can report cash collection.' },
+          { status: 403 }
+        );
+      }
+      const cashAmt = Number(reportCashPayment.amount);
+      if (isNaN(cashAmt) || cashAmt <= 0) {
+        return NextResponse.json({ error: 'Invalid cash collection amount.' }, { status: 400 });
+      }
+
+      booking.cashPayment = {
+        reportedAmount: cashAmt,
+        status: 'CASH_REPORTED',
+        reportedByUserId: session.userId,
+        reportedAt: new Date().toISOString(),
+      };
+      booking.payment = {
+        method: 'CASH',
+        status: 'PENDING',
+        transactionRef: `CASH/REP/${booking.id}`,
+        paidAt: new Date().toISOString(),
+      };
+      booking.updatedAt = new Date().toISOString();
+      booking.statusHistory.push({
+        status: booking.status,
+        timestamp: new Date().toISOString(),
+        note: `Technician reported cash collection of ₹${cashAmt}. Awaiting customer verification.`,
+        updatedByRole: 'PROVIDER',
+      });
+      db.saveBooking(booking);
+
+      db.addAuditLog({
+        id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        actorId: session.userId,
+        actorRole: effectiveRole,
+        action: 'CASH_PAYMENT_REPORTED',
+        targetEntity: 'BOOKING',
+        targetId: booking.id,
+        details: { reportedAmount: cashAmt },
+        timestamp: new Date().toISOString(),
+      });
+
+      return NextResponse.json({
+        success: true,
+        booking,
+        message: 'Cash payment reported. Awaiting confirmation.',
+      });
+    }
+
+    // 5. Confirm Cash Payment (Customer or Admin validates cash handover)
+    if (confirmCashPayment === true) {
+      if (!isCustomer && !isAdmin) {
+        return NextResponse.json(
+          { error: 'Only customer or administrator can confirm cash payments.' },
+          { status: 403 }
+        );
+      }
+      if (!booking.cashPayment || booking.cashPayment.status !== 'CASH_REPORTED') {
+        return NextResponse.json(
+          { error: 'No reported cash payment awaiting customer confirmation.' },
+          { status: 400 }
+        );
+      }
+
+      booking.cashPayment.status = 'CASH_CONFIRMED';
+      booking.cashPayment.confirmedByUserId = session.userId;
+      booking.cashPayment.confirmedAt = new Date().toISOString();
+      if (booking.payment) {
+        booking.payment.status = 'SUCCESS';
+      }
+      booking.status = 'COMPLETED';
+      booking.updatedAt = new Date().toISOString();
+
+      // Automatically activate 7-day warranty on completion
+      const warranty = db.createWarranty({
+        id: `war-${Date.now()}`,
+        bookingId: booking.id,
+        customerId: booking.customerId,
+        providerId: booking.providerId,
+        serviceCategory: booking.category,
+        warrantyStart: new Date().toISOString(),
+        warrantyEnd: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        status: 'ACTIVE',
+      });
+      booking.warrantyId = warranty.id;
+
+      booking.statusHistory.push({
+        status: 'COMPLETED',
+        timestamp: new Date().toISOString(),
+        note: `Cash payment of ₹${booking.cashPayment.reportedAmount} verified by customer. 7-Day Warranty activated.`,
+        updatedByRole: effectiveRole,
+      });
+      db.saveBooking(booking);
+
+      db.addAuditLog({
+        id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        actorId: session.userId,
+        actorRole: effectiveRole,
+        action: 'CASH_PAYMENT_CONFIRMED',
+        targetEntity: 'BOOKING',
+        targetId: booking.id,
+        details: { confirmedAmount: booking.cashPayment.reportedAmount, warrantyId: warranty.id },
+        timestamp: new Date().toISOString(),
+      });
+
+      return NextResponse.json({
+        success: true,
+        booking,
+        message: 'Cash payment confirmed and 7-Day Warranty activated.',
+      });
+    }
+
+    // 6. Safe Price Matching (Anti-Circumvention Protection)
     if (priceMatchedAmount !== undefined) {
       if (!isCustomer && !isAdmin) {
         return NextResponse.json(
@@ -273,7 +504,7 @@ export async function PATCH(request: Request) {
       booking.statusHistory.push({
         status: booking.status,
         timestamp: new Date().toISOString(),
-        note: `Price matched to ₹${matchedNum} (Offline worker quote verified on Sevanta)`,
+        note: `Price matched to ₹${matchedNum} (Offline worker quote verified on PhiksNiyar)`,
         updatedByRole: 'CUSTOMER',
       });
       db.saveBooking(booking);
@@ -292,19 +523,24 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: true, booking, message: 'Price matched successfully on app' });
     }
 
-    // 3. Status Transition Verification
+    // 7. Status Transition Verification
     if (!targetStatus) {
       return NextResponse.json({ error: 'Target status is required' }, { status: 400 });
     }
 
+    // Normalize backward compatible status aliases
+    let normalizedTarget = targetStatus as BookingStatus;
+    if ((targetStatus as any) === 'PROVIDER_ON_THE_WAY') normalizedTarget = 'ON_THE_WAY';
+    if ((targetStatus as any) === 'PAYMENT_PENDING') normalizedTarget = 'AWAITING_PAYMENT';
+
     // Validate state machine transitions
-    const check = canTransitionBooking(booking.status, targetStatus as BookingStatus, effectiveRole);
+    const check = canTransitionBooking(booking.status, normalizedTarget, effectiveRole);
     if (!check.allowed) {
       return NextResponse.json({ error: check.reason }, { status: 400 });
     }
 
-    // 4. Cryptographic Doorstep Start-OTP Validation (when starting active work)
-    if (targetStatus === 'IN_PROGRESS' && booking.status !== 'IN_PROGRESS') {
+    // 8. Cryptographic Doorstep Start-OTP Validation (when starting active work)
+    if (normalizedTarget === 'IN_PROGRESS' && booking.status !== 'IN_PROGRESS') {
       if (!isAssignedProvider && !isAdmin) {
         return NextResponse.json(
           { error: 'Only the assigned provider or admin can start work with the Doorstep OTP.' },
@@ -315,7 +551,7 @@ export async function PATCH(request: Request) {
       // Check brute force attempts on OTP (max 3 failed attempts)
       if ((booking.startOtpAttempts || 0) >= 3) {
         return NextResponse.json(
-          { error: 'Maximum OTP verification attempts exceeded. Please contact Sevanta Support.' },
+          { error: 'Maximum OTP verification attempts exceeded. Please contact PhiksNiyar Support.' },
           { status: 429 }
         );
       }
@@ -360,8 +596,23 @@ export async function PATCH(request: Request) {
       });
     }
 
-    // 5. Apply Status Transition
-    booking.status = targetStatus as BookingStatus;
+    // 9. Automatic 7-Day Warranty Activation upon COMPLETED transition
+    if (normalizedTarget === 'COMPLETED' && !booking.warrantyId) {
+      const warranty = db.createWarranty({
+        id: `war-${Date.now()}`,
+        bookingId: booking.id,
+        customerId: booking.customerId,
+        providerId: booking.providerId,
+        serviceCategory: booking.category,
+        warrantyStart: new Date().toISOString(),
+        warrantyEnd: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        status: 'ACTIVE',
+      });
+      booking.warrantyId = warranty.id;
+    }
+
+    // 10. Apply Status Transition
+    booking.status = normalizedTarget;
     booking.updatedAt = new Date().toISOString();
 
     if (cancellationReason) {
@@ -375,9 +626,9 @@ export async function PATCH(request: Request) {
     }
 
     booking.statusHistory.push({
-      status: targetStatus as BookingStatus,
+      status: normalizedTarget,
       timestamp: new Date().toISOString(),
-      note: note ? String(note).slice(0, 300) : `Status updated to ${targetStatus} by ${effectiveRole}`,
+      note: note ? String(note).slice(0, 300) : `Status updated to ${normalizedTarget} by ${effectiveRole}`,
       updatedByRole: effectiveRole,
     });
 
@@ -388,10 +639,10 @@ export async function PATCH(request: Request) {
       id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       actorId: session.userId,
       actorRole: effectiveRole,
-      action: `BOOKING_STATUS_${targetStatus}`,
+      action: `BOOKING_STATUS_${normalizedTarget}`,
       targetEntity: 'BOOKING',
       targetId: booking.id,
-      details: { previousStatus: booking.status, newStatus: targetStatus },
+      details: { previousStatus: booking.status, newStatus: normalizedTarget },
       timestamp: new Date().toISOString(),
     });
 
@@ -404,7 +655,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({
       success: true,
       booking: responseBooking,
-      message: `Booking status updated to ${targetStatus}`,
+      message: `Booking status updated to ${normalizedTarget}`,
     });
   } catch (error) {
     console.error('Error in PATCH /api/bookings:', error);

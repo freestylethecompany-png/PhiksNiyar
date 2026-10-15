@@ -23,6 +23,7 @@ import Link from 'next/link';
 import { CHILAKALURIPET_AREAS, calculateDistanceKm } from '@/lib/constants/locations';
 import { UserRole, User as UserType } from '@/lib/db/types';
 import { Language, translations } from '@/lib/i18n/translations';
+import PhiksNiyarLogo from '@/components/common/PhiksNiyarLogo';
 
 interface NavbarProps {
   currentRole: UserRole;
@@ -128,42 +129,16 @@ export default function Navbar({
     <header className="navbar">
       <div className="container navbar-inner">
         {/* Left: Brand Identity */}
-        <div className="brand-wrapper" onClick={onGoHome} role="button" tabIndex={0}>
-          <div className="brand-logo-card">
-            <img
-              src="/sevanta-logo.png"
-              alt="Sevanta"
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-            />
-          </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <span className="brand-name">
-                <span style={{ color: 'var(--primary)' }}>Seva</span>
-                <span style={{ color: 'var(--secondary)' }}>nta</span>
-              </span>
-              {currentLang === 'te' && (
-                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--secondary)' }}>
-                  (సేవంత)
-                </span>
-              )}
-              <span className="brand-badge">CHILAKALURIPET</span>
-            </div>
-            <div
-              style={{
-                fontSize: '0.6875rem',
-                color: 'var(--text-muted)',
-                fontWeight: 500,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                marginTop: '1px',
-              }}
-            >
-              <span>{t.brandTagline}</span>
-              <span style={{ color: 'var(--border-medium)' }}>•</span>
-              <span style={{ color: 'var(--secondary)', fontWeight: 600 }}>● Live in AP</span>
-            </div>
+        <div className="brand-wrapper" onClick={onGoHome} role="button" tabIndex={0} aria-label="Go to PhiksNiyar Home">
+          <PhiksNiyarLogo
+            variant="full"
+            size="md"
+            withTelugu={currentLang === 'te'}
+            withTagline={false}
+          />
+          <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginLeft: '0.25rem' }}>
+            <span className="brand-badge">CHILAKALURIPET</span>
+            <span style={{ fontSize: '0.6875rem', color: 'var(--secondary)', fontWeight: 600 }}>● Live in AP</span>
           </div>
         </div>
 
