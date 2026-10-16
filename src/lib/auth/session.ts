@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import jwt from 'jsonwebtoken';
 import { User, UserRole } from '../db/types';
 import { db } from '../db/database';
@@ -38,17 +38,32 @@ export function getSessionCookieOptions(maxAge = 30 * 24 * 60 * 60) {
 }
 
 /**
- * Reads and verifies the current session from HTTP-only cookie.
- * Validates token signature, expiration, algorithm, and DB user existence.
+ * Reads and verifies the current session from HTTP-only cookie or Authorization header.
+ * Validates token signature, expiration, algorithm, DB user existence, and suspension status.
  */
 export async function getAuthSession(): Promise<AuthSessionPayload | null> {
   try {
-    const cookieStore = await cookies();
-    const token =
-      cookieStore.get('phiksniyar_session')?.value ||
-      cookieStore.get('sevanta_session')?.value ||
-      cookieStore.get('fixnear_session')?.value ||
-      cookieStore.get('localai_session')?.value;
+    let token: string | undefined;
+
+    // 1. Check Authorization: Bearer <token> header first (essential for Android native & API clients)
+    try {
+      const headerStore = await headers();
+      const authHeader = headerStore.get('authorization');
+      if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
+        token = authHeader.slice(7).trim();
+      }
+    } catch {}
+
+    // 2. Fall back to secure HTTP-only cookies
+    if (!token) {
+      const cookieStore = await cookies();
+      token =
+        cookieStore.get('phiksniyar_session')?.value ||
+        cookieStore.get('sevanta_session')?.value ||
+        cookieStore.get('fixnear_session')?.value ||
+        cookieStore.get('localai_session')?.value;
+    }
+
     if (!token) return null;
 
     const secret = getJwtSecret();
@@ -64,6 +79,15 @@ export async function getAuthSession(): Promise<AuthSessionPayload | null> {
     const user = db.getUserById(decoded.userId);
     if (!user) {
       return null;
+    }
+
+    // Phase 2: Enforce account suspension check
+    // If provider is suspended, immediately revoke active session privileges
+    if (user.role === 'PROVIDER') {
+      const provider = db.getProviderByUserId(user.id);
+      if (provider && provider.verificationStatus === 'SUSPENDED') {
+        return null;
+      }
     }
 
     return {

@@ -76,6 +76,26 @@ export default function PrivacyPage() {
               Voice and text queries entered into our Telugu/English AI search engine are processed solely for categorizing your service need. No voice recordings or private conversations are permanently retained.
             </p>
           </section>
+
+          <section id="account-deletion">
+            <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+              5. Account Deletion & User Data Rights (Google Play Policy & DPDP Act 2023)
+            </h2>
+            <p>
+              PhiksNiyar provides users with complete autonomy over their data. You may request the permanent deletion of your account and all associated personal identifiers at any time:
+            </p>
+            <ul style={{ paddingLeft: '1.25rem', marginTop: '0.5rem', marginBottom: '0.75rem' }}>
+              <li>
+                <strong>In-App Deletion:</strong> Tap your profile avatar in the navigation bar, select <em>Account Settings</em>, and click <em>Delete Account</em>.
+              </li>
+              <li>
+                <strong>Web Deletion Request:</strong> If you uninstalled the mobile app, you can request account deletion by emailing <a href="mailto:support@phiksniyar.com" style={{ color: 'var(--primary)', fontWeight: 600 }}>support@phiksniyar.com</a> with your registered mobile number, or by logging into the PhiksNiyar web portal.
+              </li>
+            </ul>
+            <p>
+              <strong>Data Deletion Scope:</strong> Upon confirmation, your customer profile, saved addresses, authentication credentials, and active sessions are permanently erased from our production databases. Completed invoice records are stripped of all personal names and street addresses into an anonymized ledger to comply with Indian GST and financial statutory auditing obligations.
+            </p>
+          </section>
         </div>
       </div>
     </div>

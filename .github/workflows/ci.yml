@@ -1,0 +1,38 @@
+name: PhiksNiyar Production CI & Security Verification
+
+on:
+  push:
+    branches: [main, master, 'feature/**']
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  audit-and-build:
+    name: Lint, Test, Security & Build
+    runs-on: ubuntu-latest
+
+    env:
+      JWT_SECRET: "phiksniyar-ci-test-cryptographically-secure-token-32-chars-long"
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Checkout Source Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Project Dependencies
+        run: npm ci
+
+      - name: Run TypeScript Type Check
+        run: npx tsc --noEmit
+
+      - name: Run Production Security & State Machine Suite (39 Tests)
+        run: npm run test:security
+
+      - name: Run Next.js Turbopack Production Build
+        run: npm run build

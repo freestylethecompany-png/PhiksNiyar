@@ -43,3 +43,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# android build outputs & local configuration
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/*.jks.old
+
+# database backups & local storage
+data/backups/
+data/

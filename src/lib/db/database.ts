@@ -500,6 +500,86 @@ class PersistentDatabase {
     return user;
   }
 
+  public deleteUserAccount(userId: string): { success: boolean; message: string } {
+    const user = this.getUserById(userId);
+    if (!user) {
+      return { success: false, message: 'User not found' };
+    }
+
+    const deleteTx = sqlite.transaction(() => {
+      // 1. Delete associated customer profile and addresses
+      sqlite.prepare('DELETE FROM customer_profiles WHERE userId = ?').run(userId);
+      sqlite.prepare('DELETE FROM addresses WHERE userId = ?').run(userId);
+
+      // 2. If provider, deactivate provider profile and remove from active directory
+      sqlite.prepare(`
+        UPDATE providers 
+        SET verificationStatus = 'INACTIVE',
+            businessName = 'Deactivated Provider',
+            bio = 'Account closed by user.'
+        WHERE userId = ?
+      `).run(userId);
+
+      // 3. Anonymize bookings to purge PII while preserving legal/financial audit ledger
+      const redactedAddress = JSON.stringify({
+        id: 'redacted',
+        userId: 'redacted',
+        title: 'Redacted',
+        street: 'Redacted upon account deletion',
+        areaName: 'Chilakaluripet',
+        city: 'Chilakaluripet',
+        state: 'Andhra Pradesh',
+        pincode: '522616',
+        latitude: 0,
+        longitude: 0,
+        isDefault: false,
+      });
+
+      sqlite.prepare(`
+        UPDATE bookings 
+        SET customerPhone = 'REDACTED',
+            customerName = 'Deleted User',
+            customerAddress = ?
+        WHERE customerId = ?
+      `).run(redactedAddress, userId);
+
+      // 4. Delete OTP records
+      sqlite.prepare('DELETE FROM otp_codes WHERE phone = ?').run(user.phone);
+
+      // 5. Purge or anonymize user record
+      try {
+        sqlite.prepare('DELETE FROM users WHERE id = ?').run(userId);
+      } catch (fkErr) {
+        // If referenced by foreign key without cascade, scrub all PII fields
+        const anonymizedPhone = `DEL_${userId.slice(-6)}_${Date.now()}`;
+        sqlite.prepare(`
+          UPDATE users 
+          SET name = 'Deleted User',
+              phone = ?,
+              email = NULL,
+              avatarUrl = NULL,
+              updatedAt = ?
+          WHERE id = ?
+        `).run(anonymizedPhone, new Date().toISOString(), userId);
+      }
+
+      // 6. Security Audit Log
+      this.addAuditLog({
+        id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        actorId: userId,
+        actorRole: user.role,
+        action: 'USER_ACCOUNT_DELETED',
+        targetEntity: 'USER',
+        targetId: userId,
+        details: { phoneMasked: `+91 ******${user.phone.slice(-4)}` },
+        timestamp: new Date().toISOString(),
+      });
+    });
+
+    deleteTx();
+    return { success: true, message: 'Account and associated personal data deleted successfully.' };
+  }
+
   // --- PROVIDERS ---
   public getProviders(): ProviderProfile[] {
     const rows = sqlite.prepare('SELECT * FROM providers').all() as any[];

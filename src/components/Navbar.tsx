@@ -18,6 +18,8 @@ import {
   CheckCircle,
   Menu,
   X,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { CHILAKALURIPET_AREAS, calculateDistanceKm } from '@/lib/constants/locations';
@@ -62,6 +64,8 @@ export default function Navbar({
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const t = translations[currentLang];
 
@@ -635,6 +639,33 @@ export default function Navbar({
                         <LogOut size={15} />
                         <span>{t.logout || 'Log Out'}</span>
                       </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          setShowDeleteModal(true);
+                        }}
+                        style={{
+                          width: '100%',
+                          textAlign: 'left',
+                          padding: '0.4rem 1rem',
+                          background: 'transparent',
+                          border: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.65rem',
+                          fontSize: '0.75rem',
+                          color: 'var(--text-muted)',
+                          cursor: 'pointer',
+                          transition: 'color 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--danger)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+                      >
+                        <Trash2 size={13} />
+                        <span>Delete Account</span>
+                      </button>
                     </div>
                   )}
                 </div>
@@ -826,6 +857,173 @@ export default function Navbar({
                 <span>{currentRole === 'ADMIN' ? 'Marketplace View' : 'Admin Console'}</span>
               </button>
             )}
+
+            {/* Mobile User Actions */}
+            {currentUser && (
+              <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.65rem', marginTop: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                {onLogout && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      onLogout();
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.65rem',
+                      padding: '0.65rem 1rem',
+                      background: 'var(--surface-alt)',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: 'var(--radius-md)',
+                      color: 'var(--danger)',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <LogOut size={16} />
+                    <span>{t.logout || 'Log Out'}</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setShowDeleteModal(true);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    padding: '0.45rem 1rem',
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Trash2 size={14} />
+                  <span>Delete Account (Google Play / DPDP)</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Google Play / DPDP Compliant Account Deletion Modal */}
+      {showDeleteModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--surface)',
+              borderRadius: 'var(--radius-xl)',
+              maxWidth: '440px',
+              width: '100%',
+              padding: '1.75rem',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              border: '1px solid var(--border-subtle)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', color: 'var(--danger)' }}>
+              <div
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  background: 'var(--danger-light)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <AlertTriangle size={22} color="var(--danger)" />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  Delete Account?
+                </h3>
+                <span style={{ fontSize: '0.75rem', color: 'var(--danger)', fontWeight: 600 }}>
+                  Permanent & Irreversible
+                </span>
+              </div>
+            </div>
+
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+              Are you sure you want to delete your <strong>PhiksNiyar</strong> account?
+              In compliance with the <strong>Indian DPDP Act 2023</strong> and <strong>Google Play User Data Policy</strong>:
+            </p>
+
+            <ul style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: 1.5, paddingLeft: '1.25rem', marginBottom: '1.5rem' }}>
+              <li>Your phone number, profile, and addresses will be permanently purged.</li>
+              <li>Active bookings and OTP credentials will be cancelled immediately.</li>
+              <li>Historical invoices will be stripped of personal identifiers.</li>
+            </ul>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                disabled={isDeletingAccount}
+                onClick={() => setShowDeleteModal(false)}
+                className="btn-secondary"
+                style={{ padding: '0.55rem 1.1rem', fontSize: '0.875rem' }}
+              >
+                Keep Account
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingAccount}
+                onClick={async () => {
+                  setIsDeletingAccount(true);
+                  try {
+                    const res = await fetch('/api/auth/delete-account', { method: 'DELETE' });
+                    if (res.ok) {
+                      alert('Your PhiksNiyar account has been permanently deleted.');
+                      window.location.href = '/';
+                    } else {
+                      const data = await res.json();
+                      alert(data.error || 'Failed to delete account.');
+                    }
+                  } catch (err) {
+                    alert('Network error while requesting account deletion.');
+                  } finally {
+                    setIsDeletingAccount(false);
+                    setShowDeleteModal(false);
+                  }
+                }}
+                style={{
+                  background: 'var(--danger)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '0.55rem 1.1rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  cursor: isDeletingAccount ? 'not-allowed' : 'pointer',
+                  opacity: isDeletingAccount ? 0.7 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                }}
+              >
+                <Trash2 size={15} />
+                <span>{isDeletingAccount ? 'Deleting...' : 'Delete My Account'}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

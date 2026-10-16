@@ -596,6 +596,77 @@ test('SEC-35: Admin Dashboard - Metrics derived dynamically from real database',
   assert.ok(verifiedProviders.length >= 1, 'Verified providers count must be >= 1');
 });
 
+// 36. Google Play / DPDP Account Deletion
+test('SEC-36: Account Deletion - Permanently deletes account & scrubs PII for DPDP / Play Store compliance', () => {
+  const { db } = require('../src/lib/db/database');
+  const testUserId = `usr-test-del-${Date.now()}`;
+  const testPhone = `+9199999${Math.floor(10000 + Math.random() * 90000)}`;
+
+  // Create temporary user
+  db.saveUser({
+    id: testUserId,
+    name: 'Temporary User To Delete',
+    phone: testPhone,
+    role: 'CUSTOMER',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+
+  const beforeUser = db.getUserById(testUserId);
+  assert.ok(beforeUser, 'User must exist before deletion');
+
+  // Execute deletion
+  const delRes = db.deleteUserAccount(testUserId);
+  assert.strictEqual(delRes.success, true);
+
+  // Verify personal record is scrubbed
+  const afterUser = db.getUserById(testUserId);
+  if (afterUser) {
+    assert.strictEqual(afterUser.name, 'Deleted User');
+    assert.ok(afterUser.phone.startsWith('DEL_'), 'Phone number must be scrubbed');
+  } else {
+    assert.strictEqual(afterUser, undefined, 'User record must be removed');
+  }
+});
+
+// 37. Authorization Bearer Token Validation
+test('SEC-37: Mobile Bearer Token - Cryptographic JWT signature validates correctly', () => {
+  const jwt = require('jsonwebtoken');
+  const { getJwtSecret } = require('../src/lib/auth/session');
+  const secret = getJwtSecret();
+
+  const payload = {
+    userId: 'usr-mobile-client',
+    phone: '+919876543210',
+    role: 'CUSTOMER',
+    name: 'Mobile App User',
+  };
+
+  const token = jwt.sign(payload, secret, { algorithm: 'HS256', expiresIn: '30d' });
+  const decoded = jwt.verify(token, secret, { algorithms: ['HS256'] });
+
+  assert.strictEqual(decoded.userId, payload.userId);
+  assert.strictEqual(decoded.role, 'CUSTOMER');
+});
+
+// 38. Suspended Account Lockout
+test('SEC-38: Account Suspension - SUSPENDED providers are excluded from active operations', () => {
+  const { db } = require('../src/lib/db/database');
+  const verifiedList = db.getVerifiedProviders();
+  for (const p of verifiedList) {
+    assert.notStrictEqual(p.verificationStatus, 'SUSPENDED', 'Suspended providers must never be returned in verified listings');
+    assert.notStrictEqual(p.verificationStatus, 'INACTIVE', 'Inactive providers must never be returned in verified listings');
+  }
+});
+
+// 39. Payment Order Binding & Missing Order Rejection
+test('SEC-39: Payment Integrity - Unregistered order IDs are strictly rejected', () => {
+  const { db } = require('../src/lib/db/database');
+  const bogusOrderId = 'order_BOGUS_TEST_ID_999999';
+  const order = db.getPaymentByOrderId(bogusOrderId);
+  assert.strictEqual(order, undefined, 'Bogus order ID must return undefined');
+});
+
 console.log(`\n====================================================`);
 console.log(`   TEST RESULTS: ${passedTests} / ${totalTests} PASSED   `);
 console.log('====================================================\n');
