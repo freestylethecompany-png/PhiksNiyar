@@ -5,12 +5,16 @@ import { db } from '../db/database';
 
 export function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
-  if (secret && secret.trim().length >= 16) {
+  if (process.env.NODE_ENV === 'production') {
+    if (!secret || secret.trim().length < 32) {
+      throw new Error(
+        'FATAL CONFIGURATION ERROR: JWT_SECRET must be set to a cryptographically secure string of at least 32 characters in production.'
+      );
+    }
     return secret.trim();
   }
-  if (process.env.NODE_ENV === 'production') {
-    console.error('SECURITY WARNING: JWT_SECRET is unset or too short in production. Please set a 32+ character JWT_SECRET.');
-    return secret || 'phiksniyar-production-fallback-key-32-chars-long-security';
+  if (secret && secret.trim().length >= 16) {
+    return secret.trim();
   }
   return 'phiksniyar-development-only-secret-key-not-for-production-use';
 }
@@ -22,8 +26,20 @@ export interface AuthSessionPayload {
   name: string;
 }
 
+export function getSessionCookieOptions(maxAge = 30 * 24 * 60 * 60) {
+  const isProduction = process.env.NODE_ENV === 'production';
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge,
+  };
+}
+
 /**
- * Reads and verifies the current session from HTTP-only cookie
+ * Reads and verifies the current session from HTTP-only cookie.
+ * Validates token signature, expiration, algorithm, and DB user existence.
  */
 export async function getAuthSession(): Promise<AuthSessionPayload | null> {
   try {
@@ -36,8 +52,26 @@ export async function getAuthSession(): Promise<AuthSessionPayload | null> {
     if (!token) return null;
 
     const secret = getJwtSecret();
-    const decoded = jwt.verify(token, secret) as AuthSessionPayload;
-    return decoded;
+    const decoded = jwt.verify(token, secret, {
+      algorithms: ['HS256'],
+    }) as Partial<AuthSessionPayload>;
+
+    if (!decoded.userId || !decoded.phone || !decoded.role) {
+      return null;
+    }
+
+    // Verify account existence in database
+    const user = db.getUserById(decoded.userId);
+    if (!user) {
+      return null;
+    }
+
+    return {
+      userId: user.id,
+      phone: user.phone,
+      role: user.role,
+      name: user.name,
+    };
   } catch (err) {
     return null;
   }
@@ -65,6 +99,6 @@ export function createSessionToken(user: User): string {
       name: user.name,
     },
     secret,
-    { expiresIn: '30d' }
+    { algorithm: 'HS256', expiresIn: '30d' }
   );
 }

@@ -49,6 +49,17 @@ export async function POST(request: Request) {
     const isProduction = process.env.NODE_ENV === 'production';
     const razorpaySecret = process.env.RAZORPAY_KEY_SECRET;
 
+    // 1. Validate order binding to this exact booking (prevent cross-booking replay / reuse)
+    if (razorpay_order_id) {
+      const persistedOrder = db.getPaymentByOrderId(razorpay_order_id);
+      if (persistedOrder && persistedOrder.bookingId !== booking.id) {
+        return NextResponse.json(
+          { error: 'Security Violation: This payment order was generated for a different booking.' },
+          { status: 400 }
+        );
+      }
+    }
+
     if (isProduction || razorpaySecret) {
       // Production mode MANDATES valid cryptographic signature
       if (!razorpaySecret) {
@@ -84,6 +95,17 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
+    } else if (isProduction) {
+      // In production, payment verification without signature is strictly impossible
+      return NextResponse.json(
+        { error: 'Payment signature required in production.' },
+        { status: 400 }
+      );
+    }
+
+    // Update persisted payment record in database
+    if (razorpay_order_id) {
+      db.updatePaymentStatus(razorpay_order_id, 'SUCCESS', razorpay_payment_id, razorpay_signature);
     }
 
     // Amount calculation from server authoritative pricing

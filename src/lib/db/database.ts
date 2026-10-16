@@ -19,6 +19,7 @@ import {
   WarrantyRecord,
   DisputeRecord,
   CashPaymentRecord,
+  PaymentOrderRecord,
 } from './types';
 import { INITIAL_CITIES, CHILAKALURIPET_AREAS } from '../constants/locations';
 import { SERVICE_CATEGORIES } from '../constants/categories';
@@ -273,6 +274,24 @@ sqlite.exec(`
     updatedAt TEXT NOT NULL,
     FOREIGN KEY(bookingId) REFERENCES bookings(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS payments (
+    id TEXT PRIMARY KEY,
+    bookingId TEXT NOT NULL,
+    orderId TEXT UNIQUE NOT NULL,
+    paymentId TEXT,
+    method TEXT NOT NULL DEFAULT 'RAZORPAY',
+    amount REAL NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'INR',
+    status TEXT NOT NULL DEFAULT 'CREATED',
+    signature TEXT,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL,
+    FOREIGN KEY(bookingId) REFERENCES bookings(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_payments_bookingId ON payments(bookingId);
+  CREATE INDEX IF NOT EXISTS idx_payments_orderId ON payments(orderId);
 `);
 
 // High-security Aadhaar & Place verification, Doorstep OTP, Anti-Circumvention, Cash, and Warranty migrations
@@ -619,18 +638,18 @@ class PersistentDatabase {
         payment = excluded.payment,
         dispute = excluded.dispute,
         updatedAt = excluded.updatedAt,
-        startOtp = COALESCE(excluded.startOtp, bookings.startOtp),
+        startOtp = excluded.startOtp,
         cancellationReason = COALESCE(excluded.cancellationReason, bookings.cancellationReason),
         cancellationFlaggedCollusion = MAX(excluded.cancellationFlaggedCollusion, bookings.cancellationFlaggedCollusion),
         priceMatchedAmount = COALESCE(excluded.priceMatchedAmount, bookings.priceMatchedAmount),
-        additionalChargesRequested = COALESCE(excluded.additionalChargesRequested, bookings.additionalChargesRequested),
-        additionalChargesReason = COALESCE(excluded.additionalChargesReason, bookings.additionalChargesReason),
-        additionalChargesApproved = COALESCE(excluded.additionalChargesApproved, bookings.additionalChargesApproved),
-        additionalChargesApprovedAt = COALESCE(excluded.additionalChargesApprovedAt, bookings.additionalChargesApprovedAt),
-        cashPaymentReportedAmount = COALESCE(excluded.cashPaymentReportedAmount, bookings.cashPaymentReportedAmount),
-        cashPaymentStatus = COALESCE(excluded.cashPaymentStatus, bookings.cashPaymentStatus),
-        cashPaymentConfirmedAt = COALESCE(excluded.cashPaymentConfirmedAt, bookings.cashPaymentConfirmedAt),
-        cashPaymentReportedBy = COALESCE(excluded.cashPaymentReportedBy, bookings.cashPaymentReportedBy),
+        additionalChargesRequested = excluded.additionalChargesRequested,
+        additionalChargesReason = excluded.additionalChargesReason,
+        additionalChargesApproved = excluded.additionalChargesApproved,
+        additionalChargesApprovedAt = excluded.additionalChargesApprovedAt,
+        cashPaymentReportedAmount = excluded.cashPaymentReportedAmount,
+        cashPaymentStatus = excluded.cashPaymentStatus,
+        cashPaymentConfirmedAt = excluded.cashPaymentConfirmedAt,
+        cashPaymentReportedBy = excluded.cashPaymentReportedBy,
         warrantyId = COALESCE(excluded.warrantyId, bookings.warrantyId)
     `);
 
@@ -787,9 +806,12 @@ class PersistentDatabase {
   public verifyOtp(phone: string, inputCode: string): boolean {
     const row = sqlite.prepare('SELECT * FROM otp_codes WHERE phone = ?').get(phone) as any;
     if (!row) return false;
-    if (Date.now() > row.expiresAt) return false;
-    // Support either exact code or demo bypass 123456
-    if (row.code === inputCode || inputCode === '123456') {
+    if (Date.now() > row.expiresAt) {
+      sqlite.prepare('DELETE FROM otp_codes WHERE phone = ?').run(phone);
+      return false;
+    }
+    // Strictly verify exact cryptographic match
+    if (row.code && typeof inputCode === 'string' && row.code === inputCode.trim()) {
       sqlite.prepare('DELETE FROM otp_codes WHERE phone = ?').run(phone);
       return true;
     }
@@ -1565,6 +1587,105 @@ class PersistentDatabase {
       WHERE id = ?
     `).run(updated.status, updated.resolutionNotes || null, updated.refundAmount || null, updated.updatedAt, id);
     return true;
+  }
+
+  // --- USERS & METRICS ---
+  public getUsers(): User[] {
+    const rows = sqlite.prepare('SELECT * FROM users').all() as any[];
+    return rows.map((row) => ({
+      id: row.id,
+      phone: row.phone,
+      name: row.name,
+      email: row.email,
+      role: row.role as UserRole,
+      avatarUrl: row.avatarUrl,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }));
+  }
+
+  public getCustomerCount(): number {
+    try {
+      const res = sqlite.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'CUSTOMER'").get() as any;
+      return res?.count || 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  public getDisputesCount(): number {
+    try {
+      const res = sqlite.prepare('SELECT COUNT(*) as count FROM disputes').get() as any;
+      return res?.count || 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  public getVerifiedProviders(): ProviderProfile[] {
+    const rows = sqlite.prepare("SELECT * FROM providers WHERE verificationStatus = 'VERIFIED'").all() as any[];
+    return rows.map(this.mapProviderRow);
+  }
+
+  // --- PAYMENTS & ORDERS ---
+  public createPaymentOrder(data: {
+    bookingId: string;
+    orderId: string;
+    amount: number;
+    currency?: string;
+    method?: 'RAZORPAY' | 'UPI' | 'CASH';
+  }): PaymentOrderRecord {
+    const record: PaymentOrderRecord = {
+      id: `pay-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      bookingId: data.bookingId,
+      orderId: data.orderId,
+      amount: data.amount,
+      currency: data.currency || 'INR',
+      method: data.method || 'RAZORPAY',
+      status: 'CREATED',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    sqlite.prepare(`
+      INSERT INTO payments (id, bookingId, orderId, method, amount, currency, status, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(orderId) DO UPDATE SET
+        amount = excluded.amount,
+        status = excluded.status,
+        updatedAt = excluded.updatedAt
+    `).run(
+      record.id,
+      record.bookingId,
+      record.orderId,
+      record.method,
+      record.amount,
+      record.currency,
+      record.status,
+      record.createdAt,
+      record.updatedAt
+    );
+    return record;
+  }
+
+  public getPaymentByOrderId(orderId: string): PaymentOrderRecord | undefined {
+    const row = sqlite.prepare('SELECT * FROM payments WHERE orderId = ?').get(orderId) as any;
+    if (!row) return undefined;
+    return row as PaymentOrderRecord;
+  }
+
+  public getPaymentByBookingId(bookingId: string): PaymentOrderRecord | undefined {
+    const row = sqlite.prepare('SELECT * FROM payments WHERE bookingId = ? ORDER BY createdAt DESC LIMIT 1').get(bookingId) as any;
+    if (!row) return undefined;
+    return row as PaymentOrderRecord;
+  }
+
+  public updatePaymentStatus(orderId: string, status: string, paymentId?: string, signature?: string): boolean {
+    const res = sqlite.prepare(`
+      UPDATE payments
+      SET status = ?, paymentId = COALESCE(?, paymentId), signature = COALESCE(?, signature), updatedAt = ?
+      WHERE orderId = ?
+    `).run(status, paymentId || null, signature || null, new Date().toISOString(), orderId);
+    return res.changes > 0;
   }
 
   // --- HEALTH CHECK ---

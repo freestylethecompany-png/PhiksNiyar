@@ -6,18 +6,19 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  themeColor: '#182B49',
+  themeColor: '#102F78',
 };
 
 export const metadata: Metadata = {
-  title: 'PhiksNiyar (ఫిక్స్ నియర్) — Local help. Right when you need it. | Chilakaluripet, Andhra Pradesh',
+  title: 'PhiksNiyar (ఫిక్స్ నియర్) — Skilled People • Real Solutions | Chilakaluripet, Andhra Pradesh',
   description:
-    'PhiksNiyar (ఫిక్స్ నియర్) connects households with verified local AC technicians, electricians, plumbers, and mechanics near you in Chilakaluripet with instant AI matching, upfront pricing, 7-day warranty protection, and UPI payments.',
+    'PhiksNiyar (ఫిక్స్ నియర్) connects households with verified local AC technicians, electricians, plumbers, and mechanics near you in Chilakaluripet with instant AI matching, upfront pricing, 7-day warranty protection, and UPI payments. Skilled People • Real Solutions.',
   keywords: [
     'PhiksNiyar',
     'PhiksNiyar Chilakaluripet',
     'ఫిక్స్ నియర్',
     'ఫిక్స్ నియర్ చిలకలూరిపేట',
+    'Skilled People Real Solutions',
     'Local help. Right when you need it.',
     'Chilakaluripet local services',
     'AC repair Chilakaluripet',
@@ -35,9 +36,9 @@ export const metadata: Metadata = {
     title: 'PhiksNiyar',
   },
   openGraph: {
-    title: 'PhiksNiyar (ఫిక్స్ నియర్) — Local help. Right when you need it.',
+    title: 'PhiksNiyar (ఫిక్స్ నియర్) — Skilled People • Real Solutions',
     description:
-      'PhiksNiyar connects households with verified local AC technicians, electricians, plumbers, and mechanics in Chilakaluripet with instant AI matching and UPI payments.',
+      'PhiksNiyar connects households with verified local AC technicians, electricians, plumbers, and mechanics in Chilakaluripet with instant AI matching, upfront pricing, and UPI payments.',
     url: 'https://phiksniyar.in',
     siteName: 'PhiksNiyar',
     locale: 'en_IN',
@@ -45,22 +46,26 @@ export const metadata: Metadata = {
     images: [
       {
         url: '/phiksniyar-logo.png',
-        width: 1024,
-        height: 1024,
-        alt: 'PhiksNiyar — Local help. Right when you need it.',
+        width: 880,
+        height: 738,
+        alt: 'PhiksNiyar — Skilled People • Real Solutions',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'PhiksNiyar (ఫిక్స్ నియర్) — Local help. Right when you need it.',
-    description: 'AI-powered local services marketplace in Chilakaluripet, AP.',
+    title: 'PhiksNiyar (ఫిక్స్ నియర్) — Skilled People • Real Solutions',
+    description: 'AI-powered local services marketplace in Chilakaluripet, AP. Skilled People • Real Solutions.',
     images: ['/phiksniyar-logo.png'],
   },
   icons: {
-    icon: '/phiksniyar-logo.png',
-    shortcut: '/phiksniyar-logo.png',
-    apple: '/phiksniyar-logo.png',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.png', type: 'image/png' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/icon-192.png',
   },
 };
 
@@ -73,9 +78,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
-        <link rel="icon" href="/phiksniyar-logo.png" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/phiksniyar-logo.png" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="PhiksNiyar" />

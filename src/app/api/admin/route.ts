@@ -33,7 +33,11 @@ export async function GET() {
       0
     );
 
-    const pendingProviders = providers.filter((p) => p.verificationStatus === 'PENDING');
+    const totalCustomers = db.getCustomerCount();
+    const disputesCount = db.getDisputesCount();
+    const verificationQueue = providers.filter((p) =>
+      ['PENDING', 'DOCUMENT_SUBMITTED', 'UNDER_REVIEW'].includes(p.verificationStatus)
+    );
     const verifiedProviders = providers.filter((p) => p.verificationStatus === 'VERIFIED');
 
     const categoryCounts: Record<string, number> = {};
@@ -44,18 +48,18 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       metrics: {
-        totalCustomers: 1,
+        totalCustomers,
         totalProviders: providers.length,
         verifiedProviders: verifiedProviders.length,
-        pendingVerifications: pendingProviders.length,
+        pendingVerifications: verificationQueue.length,
         totalBookings: bookings.length,
         completedJobs: completedBookings.length,
         grossRevenue: totalGrossRevenue,
         platformCommission: totalPlatformCommission,
         commissionPercent: settings.platformCommissionPercent,
-        disputesCount: 0,
+        disputesCount,
       },
-      verificationQueue: pendingProviders.map((p) => ({
+      verificationQueue: verificationQueue.map((p) => ({
         ...p,
         user: db.getUserById(p.userId),
       })),
@@ -134,9 +138,21 @@ export async function PATCH(request: Request) {
     const { commissionPercent, matchingWeights, defaultSearchRadiusKm } = body;
 
     const updates: any = {};
-    if (commissionPercent !== undefined) updates.platformCommissionPercent = Number(commissionPercent);
+    if (commissionPercent !== undefined) {
+      const comm = Number(commissionPercent);
+      if (isNaN(comm) || comm < 0 || comm > 100) {
+        return NextResponse.json({ error: 'Commission percent must be between 0 and 100' }, { status: 400 });
+      }
+      updates.platformCommissionPercent = comm;
+    }
     if (matchingWeights) updates.matchingWeights = matchingWeights;
-    if (defaultSearchRadiusKm !== undefined) updates.defaultSearchRadiusKm = Number(defaultSearchRadiusKm);
+    if (defaultSearchRadiusKm !== undefined) {
+      const radius = Number(defaultSearchRadiusKm);
+      if (isNaN(radius) || radius <= 0 || radius > 500) {
+        return NextResponse.json({ error: 'Search radius must be between 1 and 500 km' }, { status: 400 });
+      }
+      updates.defaultSearchRadiusKm = radius;
+    }
 
     db.updateSettings(updates);
 

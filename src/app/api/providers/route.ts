@@ -76,8 +76,8 @@ export async function GET(request: Request) {
       });
     }
 
-    // Default: list active providers with sanitized public details
-    const allProviders = db.getProviders().map((p) => {
+    // Default: list verified providers with sanitized public details
+    const allProviders = db.getVerifiedProviders().map((p) => {
       const reviews = db.getReviewsForProvider(p.id);
       return {
         ...sanitizePublicProvider(p),

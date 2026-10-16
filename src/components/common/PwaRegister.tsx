@@ -103,7 +103,7 @@ export default function PwaRegister() {
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
         <img
-          src="/phiksniyar-logo.png"
+          src="/phiksniyar-emblem.png"
           onError={(e) => {
             (e.target as HTMLImageElement).src = '/logo.png';
           }}

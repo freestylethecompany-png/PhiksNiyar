@@ -96,11 +96,11 @@ export default function AuthModal({ initialRole = 'CUSTOMER', onSuccess, onClose
               }}
             >
               <img
-                src="/phiksniyar-logo.png"
+                src="/phiksniyar-emblem.png"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = '/logo.png';
                 }}
-                alt="PhiksNiyar"
+                alt="PhiksNiyar Emblem"
                 style={{ width: '100%', height: '100%', objectFit: 'contain' }}
               />
             </div>
@@ -109,8 +109,8 @@ export default function AuthModal({ initialRole = 'CUSTOMER', onSuccess, onClose
                 {step === 'PHONE' ? 'Sign in with Phone' : 'Enter 6-digit OTP'}
               </h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                <span style={{ fontWeight: 800, color: 'var(--primary)' }}>Sev</span>
-                <span style={{ fontWeight: 800, color: 'var(--secondary)' }}>anta</span> (సేవంత) • Chilakaluripet, AP
+                <span style={{ fontWeight: 800, color: 'var(--primary)' }}>Phiks</span>
+                <span style={{ fontWeight: 800, color: 'var(--secondary)' }}>Niyar</span> (ఫిక్స్ నియర్) • Chilakaluripet, AP
               </p>
             </div>
           </div>

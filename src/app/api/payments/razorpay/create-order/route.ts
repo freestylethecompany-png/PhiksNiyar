@@ -60,6 +60,16 @@ export async function POST(request: Request) {
 
         if (rzpResponse.ok) {
           const order = await rzpResponse.json();
+
+          // Persist order binding to prevent tampering and cross-booking re-use
+          db.createPaymentOrder({
+            bookingId: booking.id,
+            orderId: order.id,
+            amount: amount,
+            currency: order.currency || 'INR',
+            method: 'RAZORPAY',
+          });
+
           return NextResponse.json({
             success: true,
             isProduction: true,
@@ -84,6 +94,16 @@ export async function POST(request: Request) {
     }
 
     const simulatedOrderId = `order_${Math.random().toString(36).substring(2, 12).toUpperCase()}`;
+
+    // Persist sandbox order binding in development
+    db.createPaymentOrder({
+      bookingId: booking.id,
+      orderId: simulatedOrderId,
+      amount: amount,
+      currency: 'INR',
+      method: 'RAZORPAY',
+    });
+
     return NextResponse.json({
       success: true,
       isProduction: false,

@@ -211,11 +211,11 @@ export default function AdminDashboard({ currentUser, onAuthenticateAdmin, onGoH
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <img
-                src="/phiksniyar-logo.png"
+                src="/phiksniyar-emblem.png"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = '/logo.png';
                 }}
-                alt="PhiksNiyar"
+                alt="PhiksNiyar Emblem"
                 style={{ width: '32px', height: '32px', objectFit: 'contain' }}
               />
               <h1 style={{ fontSize: '1.6rem' }}>

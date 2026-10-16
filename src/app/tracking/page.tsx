@@ -24,6 +24,7 @@ import DeliveryStatusStepper from '@/components/tracking/DeliveryStatusStepper';
 import DeliveryPartnerSimulator from '@/components/tracking/DeliveryPartnerSimulator';
 import { useLiveTracking } from '@/lib/tracking/useLiveTracking';
 import { Language, translations } from '@/lib/i18n/translations';
+import PhiksNiyarLogo from '@/components/common/PhiksNiyarLogo';
 
 function TrackingPageContent() {
   const searchParams = useSearchParams();
@@ -69,21 +70,8 @@ function TrackingPageContent() {
           padding: '20px',
         }}
       >
-        <div
-          style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: '50%',
-            border: '3px solid #e2e8f0',
-            borderTopColor: '#0b3b95',
-            animation: 'spin 1s linear infinite',
-            marginBottom: '16px',
-          }}
-        />
-        <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>
-          {isTelugu ? 'డెలివరీ ట్రాకింగ్ సమాచారం లోడ్ అవుతోంది...' : 'Connecting to Live Delivery Stream...'}
-        </h3>
-        <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
+        <PhiksNiyarLogo variant="loading" size="lg" withTelugu={isTelugu} />
+        <p style={{ fontSize: '13px', color: '#64748b', marginTop: '14px' }}>
           Connecting to real-time GPS telemetry for Order #{orderId}...
         </p>
       </div>
@@ -143,10 +131,7 @@ function TrackingPageContent() {
             </Link>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontWeight: 900, fontSize: '1.25rem', letterSpacing: '-0.02em' }}>
-                <span style={{ color: '#0b3b95' }}>Fix</span>
-                <span style={{ color: '#00a651' }}>Near</span>
-              </span>
+              <PhiksNiyarLogo variant="full" size="sm" withTelugu={isTelugu} withTagline={false} />
               <span
                 style={{
                   fontSize: '11px',

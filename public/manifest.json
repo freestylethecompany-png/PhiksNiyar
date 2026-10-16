@@ -1,7 +1,7 @@
 {
-  "name": "PhiksNiyar — Local Services (ఫిక్స్ నియర్)",
+  "name": "PhiksNiyar — Skilled People • Real Solutions (ఫిక్స్ నియర్)",
   "short_name": "PhiksNiyar",
-  "description": "Local help. Right when you need it. Verified technicians, electricians, plumbers & mechanics in Chilakaluripet, AP.",
+  "description": "Skilled People • Real Solutions. Verified technicians, electricians, plumbers & mechanics in Chilakaluripet, AP.",
   "start_url": "/",
   "id": "/",
   "scope": "/",
@@ -9,30 +9,30 @@
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait-primary",
   "background_color": "#F8FAFC",
-  "theme_color": "#182B49",
+  "theme_color": "#102F78",
   "categories": ["lifestyle", "utilities", "business"],
   "lang": "en-IN",
   "icons": [
     {
-      "src": "/phiksniyar-logo.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/phiksniyar-logo.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/phiksniyar-logo.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/phiksniyar-logo.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

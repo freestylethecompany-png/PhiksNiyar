@@ -5,8 +5,11 @@ const STATIC_ASSETS = [
   '/offline.html',
   '/manifest.json',
   '/phiksniyar-logo.png',
+  '/phiksniyar-emblem.png',
+  '/phiksniyar-logo-horizontal.png',
   '/logo.png',
   '/icon.png',
+  '/favicon.png',
 ];
 
 self.addEventListener('install', (event) => {

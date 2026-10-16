@@ -113,13 +113,30 @@ export async function POST(request: Request) {
       }
     }
 
+    // In production, ensure at least one SMS gateway is configured
+    if (isProduction && !fast2SmsKey && !twilioSid) {
+      console.error('CRITICAL: No SMS gateway (FAST2SMS_API_KEY or TWILIO) configured in production.');
+      return NextResponse.json(
+        { error: 'SMS verification gateway is currently unconfigured. Please contact PhiksNiyar administration.' },
+        { status: 503 }
+      );
+    }
+
+    // If gateways were configured but neither succeeded, return an honest failure
+    if ((fast2SmsKey || twilioSid) && !smsSent) {
+      return NextResponse.json(
+        { error: 'Failed to deliver SMS verification code. Please check mobile signal or retry shortly.' },
+        { status: 502 }
+      );
+    }
+
     const responsePayload: Record<string, any> = {
       success: true,
-      message: `OTP sent successfully to ${phone}`,
+      message: 'Verification code sent successfully via SMS.',
       phone,
     };
 
-    // In development mode only (when explicitly not production and SMS gateways not set)
+    // In local development mode only when no SMS gateway is available
     if (!isProduction && !fast2SmsKey && !twilioSid) {
       responsePayload.devOtp = code;
     }
@@ -127,6 +144,6 @@ export async function POST(request: Request) {
     return NextResponse.json(responsePayload);
   } catch (error) {
     console.error('Error in /api/auth/send-otp:', error);
-    return NextResponse.json({ error: 'Failed to send OTP' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to process OTP request' }, { status: 500 });
   }
 }

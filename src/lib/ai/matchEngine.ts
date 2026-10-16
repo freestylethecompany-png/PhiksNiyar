@@ -27,8 +27,8 @@ export function rankProvidersForRequest(
   const results: ProviderMatchResult[] = [];
 
   for (const provider of providers) {
-    // Check if provider is suspended or rejected
-    if (provider.verificationStatus === 'SUSPENDED' || provider.verificationStatus === 'REJECTED') {
+    // Strict provider eligibility: Only verified providers can be matched
+    if (provider.verificationStatus !== 'VERIFIED') {
       continue;
     }
 

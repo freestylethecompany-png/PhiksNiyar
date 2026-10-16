@@ -284,6 +284,20 @@ export interface Booking {
   updatedAt: string;
 }
 
+export interface PaymentOrderRecord {
+  id: string;
+  bookingId: string;
+  orderId: string;
+  paymentId?: string;
+  method: 'RAZORPAY' | 'UPI' | 'CASH';
+  amount: number;
+  currency: string;
+  status: 'CREATED' | 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
+  signature?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Review {
   id: string;
   bookingId: string;

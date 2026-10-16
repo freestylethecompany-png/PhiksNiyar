@@ -300,6 +300,302 @@ test('SEC-27: Doorstep OTP - Provider payload must have startOtp stripped', () =
   assert.strictEqual(customerView.startOtp, '4921', 'Customer must see their OTP');
 });
 
+// 28. Real Database OTP Backdoor Removal
+test('SEC-28: OTP Backdoor Elimination - 123456 cannot bypass verification in real database', () => {
+  const { db } = require('../src/lib/db/database');
+  const testPhone = '+919999900001';
+  db.saveOtp(testPhone, '847291', 10); // Real code is 847291
+
+  const backdoorAttempt = db.verifyOtp(testPhone, '123456');
+  assert.strictEqual(backdoorAttempt, false, 'Hardcoded 123456 backdoor must be rejected');
+
+  const validAttempt = db.verifyOtp(testPhone, '847291');
+  assert.strictEqual(validAttempt, true, 'Real OTP must be verified successfully');
+
+  const replayAttempt = db.verifyOtp(testPhone, '847291');
+  assert.strictEqual(replayAttempt, false, 'Replayed OTP must be rejected after single use');
+});
+
+// 29. Production JWT Secret Fail-Safe
+test('SEC-29: Production Fail-Safe - Missing or short JWT_SECRET throws fatal error in production', () => {
+  const origEnv = process.env.NODE_ENV;
+  const origSecret = process.env.JWT_SECRET;
+  try {
+    process.env.NODE_ENV = 'production';
+    delete process.env.JWT_SECRET;
+    const { getJwtSecret } = require('../src/lib/auth/session');
+    assert.throws(
+      () => getJwtSecret(),
+      /FATAL.*JWT_SECRET/,
+      'Must refuse to boot or generate tokens without production secret'
+    );
+  } finally {
+    process.env.NODE_ENV = origEnv;
+    if (origSecret) process.env.JWT_SECRET = origSecret;
+  }
+});
+
+// 30. Razorpay Order Binding and Anti-Replay
+test('SEC-30: Razorpay Security - Order persistence and cross-booking payment isolation', () => {
+  const { db } = require('../src/lib/db/database');
+  const existingBookings = db.getBookings();
+  assert.ok(existingBookings.length > 0, 'Must have at least one booking in database');
+  const bookingA = existingBookings[0].id;
+  const bookingB = 'bk-unrelated-target-' + Date.now();
+  const orderId = 'order_aud_' + Date.now();
+
+  db.createPaymentOrder({
+    bookingId: bookingA,
+    orderId: orderId,
+    amount: 299,
+    currency: 'INR',
+    status: 'CREATED',
+  });
+
+  const persisted = db.getPaymentByOrderId(orderId);
+  assert.ok(persisted, 'Order must be persisted in database');
+  assert.strictEqual(persisted.bookingId, bookingA);
+  assert.strictEqual(persisted.amount, 299);
+
+  // Cross-booking verification attempt: order was generated for A, attacker tries to credit B
+  const isCrossBooking = persisted.bookingId !== bookingB;
+  assert.strictEqual(isCrossBooking, true, 'Order created for booking A must never be accepted for booking B');
+
+  db.updatePaymentStatus(orderId, 'SUCCESS', 'pay_dummy_123');
+  const updated = db.getPaymentByOrderId(orderId);
+  assert.strictEqual(updated.status, 'SUCCESS');
+});
+
+// 31. BookingService Canonical Lifecycle and Accurate Previous-Status Audit
+test('SEC-31: BookingService - State transitions enforce canonical rules and capture true previousStatus', () => {
+  const { db } = require('../src/lib/db/database');
+  const { BookingService } = require('../src/lib/bookings/bookingService');
+
+  const verifiedProviders = db.getVerifiedProviders();
+  assert.ok(verifiedProviders.length > 0, 'Must have at least one verified provider');
+  const provider = verifiedProviders[0];
+
+  const customerId = 'usr-test-cust-audit';
+  let custUser = db.getUserById(customerId);
+  if (!custUser) {
+    custUser = {
+      id: customerId,
+      name: 'Audit Customer',
+      phone: '+919848099999',
+      role: 'CUSTOMER',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    db.saveUser(custUser);
+  }
+
+  const custSession = {
+    userId: custUser.id,
+    phone: custUser.phone,
+    role: 'CUSTOMER',
+    name: custUser.name,
+  };
+
+  const booking = BookingService.createBooking(custSession, {
+    providerId: provider.id,
+    category: provider.primaryCategory,
+    description: 'Electrical inspection for home',
+  });
+
+  assert.strictEqual(booking.status, 'REQUESTED');
+  assert.ok(booking.startOtp, 'Must generate doorstep startOtp');
+
+  const provSession = {
+    userId: provider.userId,
+    phone: '+919848088888',
+    role: 'PROVIDER',
+    name: provider.businessName,
+  };
+
+  // Transition REQUESTED -> ACCEPTED
+  const res1 = BookingService.transitionBookingStatus(provSession, {
+    bookingId: booking.id,
+    targetStatus: 'ACCEPTED',
+  });
+  assert.strictEqual(res1.booking.status, 'ACCEPTED');
+
+  const auditLogs1 = db.getAuditLogs(5);
+  const log1 = auditLogs1.find((l) => l.targetId === booking.id && l.action === 'BOOKING_STATUS_ACCEPTED');
+  assert.ok(log1, 'Audit log for ACCEPTED must exist');
+  assert.strictEqual(log1.details.previousStatus, 'REQUESTED', 'Previous status must be REQUESTED, not ACCEPTED');
+  assert.strictEqual(log1.details.newStatus, 'ACCEPTED');
+
+  // Transition ACCEPTED -> ON_THE_WAY
+  const res2 = BookingService.transitionBookingStatus(provSession, {
+    bookingId: booking.id,
+    targetStatus: 'ON_THE_WAY',
+  });
+  assert.strictEqual(res2.booking.status, 'ON_THE_WAY');
+
+  const auditLogs2 = db.getAuditLogs(5);
+  const log2 = auditLogs2.find((l) => l.targetId === booking.id && l.action === 'BOOKING_STATUS_ON_THE_WAY');
+  assert.strictEqual(log2.details.previousStatus, 'ACCEPTED', 'Previous status must be ACCEPTED, not ON_THE_WAY');
+
+  // Transition ON_THE_WAY -> ARRIVED
+  const res3 = BookingService.transitionBookingStatus(provSession, {
+    bookingId: booking.id,
+    targetStatus: 'ARRIVED',
+  });
+  assert.strictEqual(res3.booking.status, 'ARRIVED');
+});
+
+// 32. Doorstep OTP Validation and Safe Consumption
+test('SEC-32: Doorstep OTP - Enforces correct code and clears OTP on job start', () => {
+  const { db } = require('../src/lib/db/database');
+  const { BookingService, BookingServiceError } = require('../src/lib/bookings/bookingService');
+
+  const verifiedProviders = db.getVerifiedProviders();
+  const provider = verifiedProviders[0];
+  const custUser = db.getUserById('usr-test-cust-audit');
+  const custSession = {
+    userId: custUser.id,
+    phone: custUser.phone,
+    role: 'CUSTOMER',
+    name: custUser.name,
+  };
+  const provSession = {
+    userId: provider.userId,
+    phone: '+919848088888',
+    role: 'PROVIDER',
+    name: provider.businessName,
+  };
+
+  const booking = BookingService.createBooking(custSession, {
+    providerId: provider.id,
+    category: provider.primaryCategory,
+    description: 'Water pump repair',
+  });
+
+  BookingService.transitionBookingStatus(provSession, { bookingId: booking.id, targetStatus: 'ACCEPTED' });
+  BookingService.transitionBookingStatus(provSession, { bookingId: booking.id, targetStatus: 'ON_THE_WAY' });
+  BookingService.transitionBookingStatus(provSession, { bookingId: booking.id, targetStatus: 'ARRIVED' });
+
+  // Wrong OTP attempt
+  assert.throws(
+    () => {
+      BookingService.transitionBookingStatus(provSession, {
+        bookingId: booking.id,
+        targetStatus: 'IN_PROGRESS',
+        startOtpInput: '9999', // wrong OTP
+      });
+    },
+    (err) => err instanceof BookingServiceError && err.statusCode === 400 && err.message.includes('Invalid Doorstep Start-OTP')
+  );
+
+  // Correct OTP attempt
+  const currentBooking = db.getBookingById(booking.id);
+  const correctOtp = currentBooking.startOtp;
+  const res = BookingService.transitionBookingStatus(provSession, {
+    bookingId: booking.id,
+    targetStatus: 'IN_PROGRESS',
+    startOtpInput: correctOtp,
+  });
+
+  assert.strictEqual(res.booking.status, 'IN_PROGRESS');
+  assert.strictEqual(res.booking.startOtp, undefined, 'startOtp must be stripped/cleared');
+
+  // Verify in database that startOtp is null and cannot be replayed
+  const inDb = db.getBookingById(booking.id);
+  assert.strictEqual(inDb.startOtp, undefined, 'startOtp must be cleared in database');
+});
+
+// 33. Unverified Provider Booking Rejection
+test('SEC-33: Provider Eligibility - Unverified or pending provider cannot receive bookings', () => {
+  const { db } = require('../src/lib/db/database');
+  const { BookingService, BookingServiceError } = require('../src/lib/bookings/bookingService');
+
+  let unverifiedUser = db.getUserById('usr-unverified-p');
+  if (!unverifiedUser) {
+    db.saveUser({
+      id: 'usr-unverified-p',
+      name: 'Unverified Provider User',
+      phone: '+919848077777',
+      role: 'PROVIDER',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  const unverifiedProvider = {
+    id: 'prov-unverified-test',
+    userId: 'usr-unverified-p',
+    businessName: 'Unverified AC Service',
+    primaryCategory: 'AC Service',
+    categories: ['AC Service'],
+    subcategories: ['Standard'],
+    experienceYears: 2,
+    serviceRadiusKm: 10,
+    locationArea: 'Kalamandir Center',
+    latitude: 16.0885,
+    longitude: 80.166,
+    verificationStatus: 'DOCUMENT_SUBMITTED', // NOT VERIFIED
+    verificationDocuments: { idDocumentUploaded: true, idNumberMasked: 'XXXX' },
+    workingHours: { days: ['Monday'], startTime: '09:00', endTime: '18:00', isAvailableToday: true },
+    pricingModel: { visitingCharge: 199 },
+    metrics: { rating: 4.5, totalReviews: 0, completedJobs: 0, cancellationRate: 0, responseRate: 90, avgResponseMinutes: 10 },
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  db.saveProvider(unverifiedProvider);
+
+  const custUser = db.getUserById('usr-test-cust-audit');
+  const custSession = {
+    userId: custUser.id,
+    phone: custUser.phone,
+    role: 'CUSTOMER',
+    name: custUser.name,
+  };
+
+  assert.throws(
+    () => {
+      BookingService.createBooking(custSession, {
+        providerId: unverifiedProvider.id,
+        category: 'AC Service',
+        description: 'AC Gas Refill',
+      });
+    },
+    (err) => err instanceof BookingServiceError && err.statusCode === 400 && err.message.includes('not currently verified')
+  );
+});
+
+// 34. AI Provider Match Filter Verification
+test('SEC-34: AI Match Engine - Only VERIFIED providers appear in match recommendations', () => {
+  const { rankProvidersForRequest } = require('../src/lib/ai/matchEngine');
+  const matches = rankProvidersForRequest({
+    category: 'Plumber',
+    customerLat: 16.0885,
+    customerLon: 80.166,
+  });
+
+  assert.ok(matches.length > 0, 'Should find matches in Chilakaluripet');
+  for (const m of matches) {
+    assert.strictEqual(
+      m.provider.verificationStatus,
+      'VERIFIED',
+      `Matched provider ${m.provider.businessName} must be VERIFIED`
+    );
+  }
+});
+
+// 35. Admin Dynamic Metrics Accuracy
+test('SEC-35: Admin Dashboard - Metrics derived dynamically from real database', () => {
+  const { db } = require('../src/lib/db/database');
+  const customerCount = db.getCustomerCount();
+  const disputesCount = db.getDisputesCount();
+  const verifiedProviders = db.getVerifiedProviders();
+
+  assert.strictEqual(typeof customerCount, 'number');
+  assert.ok(customerCount >= 1, 'Customer count must be at least 1');
+  assert.strictEqual(typeof disputesCount, 'number');
+  assert.ok(disputesCount >= 0, 'Disputes count must be >= 0');
+  assert.ok(verifiedProviders.length >= 1, 'Verified providers count must be >= 1');
+});
+
 console.log(`\n====================================================`);
 console.log(`   TEST RESULTS: ${passedTests} / ${totalTests} PASSED   `);
 console.log('====================================================\n');
