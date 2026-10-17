@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test:security": "npx tsx scripts/security-audit-suite.js"
+    "test:security": "npx tsx scripts/security-audit-suite.js",
+    "test:smoke": "npx tsx scripts/smoke-test.js",
+    "db:backup": "npx tsx scripts/db-backup.ts",
+    "db:migrate:postgres": "npx tsx scripts/migrate-to-postgres.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",
