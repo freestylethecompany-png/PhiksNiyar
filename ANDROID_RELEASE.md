@@ -48,14 +48,14 @@ cd android
 - **Telugu Short Description:**
   > నైపుణ్యం కలిగిన నిపుణులు • నిజమైన పరిష్కారాలు. చిలకలూరిపేట స్థానిక సేవలు.
 - **Category:** House & Home / Business Services
-- **Contact Email:** `support@phiksniyar.com`
+- **Contact Email:** `support@phiksniyar.in`
 - **Official Phone:** `+91 98480 22338`
 - **Physical Address:** Main Road, Kalamandir Center, Chilakaluripet, Palnadu District, AP 522616.
 
 ### Privacy Policy & Terms URL
-- Privacy Policy: `https://phiksniyar.com/privacy`
-- Terms of Service: `https://phiksniyar.com/terms`
-- Account Deletion URL: `https://phiksniyar.com/privacy#deletion` (Also accessible in-app under Account Settings).
+- Privacy Policy: `https://phiksniyar.in/privacy`
+- Terms of Service: `https://phiksniyar.in/terms`
+- Account Deletion URL: `https://phiksniyar.in/privacy#account-deletion` (Also accessible in-app under Account Settings).
 
 ---
 

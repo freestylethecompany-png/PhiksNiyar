@@ -49,7 +49,21 @@ android/.gradle/
 android/build/
 android/app/build/
 android/local.properties
-android/*.jks.old
+android/key.properties
+android/release-signing.properties
+
+# Android keystores and private signing credentials
+*.jks
+*.keystore
+*.p12
+*.p8
+*.key
+*.der
+*.pk8
+
+# Built application packages
+*.apk
+*.aab
 
 # database backups & local storage
 data/backups/

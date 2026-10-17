@@ -50,7 +50,7 @@ Visit local electrical hardware stores, plumbing parts shops, and AC repair work
 > ✅ 4-డిజిట్ స్టార్ట్-ఓటీపీ ద్వారా మీ పనికి భద్రత  
 >  
 > ఈరోజే మీ పేరు నమోదు చేసుకోండి:  
-> 📲 **వెబ్‌సైట్:** https://phiksniyar.com  
+> 📲 **వెబ్‌సైట్:** https://phiksniyar.in  
 > 📞 **డైరెక్ట్ ఫోన్ / వాట్సాప్:** +91 98480 22338  
 > *ఫిక్స్ నియర్ — నైపుణ్యం కలిగిన నిపుణులు • నిజమైన పరిష్కారాలు.*
 
@@ -63,7 +63,7 @@ Visit local electrical hardware stores, plumbing parts shops, and AC repair work
 > ✅ Keep 90% of your earnings; pay 10% only after job completion  
 > ✅ Secure 4-digit Doorstep Start-OTP for worker safety  
 >  
-> Register now: https://phiksniyar.com  
+> Register now: https://phiksniyar.in  
 > Or call/WhatsApp: +91 98480 22338
 
 ---
@@ -85,7 +85,7 @@ Visit local electrical hardware stores, plumbing parts shops, and AC repair work
 > 💰 **స్పష్టమైన ముందస్తు ధరలు — దాగివున్న ఛార్జీలు లేవు**  
 >  
 > ఇప్పుడే బుక్ చేసుకోండి:  
-> 👉 https://phiksniyar.com  
+> 👉 https://phiksniyar.in  
 > లేదా వాట్సాప్ ద్వారా వెంటనే బుక్ చేయండి: https://wa.me/919848022338  
 > 📞 హెల్ప్‌లైన్: +91 98480 22338
 
@@ -98,7 +98,7 @@ Visit local electrical hardware stores, plumbing parts shops, and AC repair work
 > • Guaranteed 7-Day Free Rework Warranty  
 > • Pay via UPI, Cash on Delivery, or Card  
 >  
-> Book online in 60 seconds: https://phiksniyar.com  
+> Book online in 60 seconds: https://phiksniyar.in  
 > WhatsApp booking: https://wa.me/919848022338  
 > Phone support: +91 98480 22338
 
@@ -110,13 +110,13 @@ Visit local electrical hardware stores, plumbing parts shops, and AC repair work
 - **Headline:** Emergency Repair in Chilakaluripet? (చిలకలూరిపేటలో తక్షణ రిపేర్ సర్వీస్)
 - **Visual:** High-contrast blue background with the PhiksNiyar emblem and tool icons.
 - **Body:** Got a sparking switchboard, water leakage, or faulty motor? Get a verified local technician at your doorstep. Starting at ₹149.
-- **CTA:** Book on https://phiksniyar.com or WhatsApp +91 98480 22338.
+- **CTA:** Book on https://phiksniyar.in or WhatsApp +91 98480 22338.
 
 ### Post 2: The 7-Day Free Warranty Promise
 - **Headline:** Why Chilakaluripet Trusts PhiksNiyar (7 రోజుల ఉచిత వారంటీ హామీ)
 - **Visual:** Green shield icon with gold badge reading "7-DAY REWORK GUARANTEE".
 - **Body:** If the same problem happens again within 7 days, our partner fixes it for FREE. Zero hassle, zero extra fees.
-- **CTA:** Tap link to book: https://phiksniyar.com
+- **CTA:** Tap link to book: https://phiksniyar.in
 
 ### Post 3: Technician Recruitment
 - **Headline:** చిలకలూరిపేట టెక్నీషియన్లకు సువర్ణావకాశం!

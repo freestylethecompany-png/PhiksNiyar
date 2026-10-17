@@ -18,13 +18,22 @@ android {
     }
     signingConfigs {
         release {
-            def storeFilePath = System.getenv("KEYSTORE_PATH") ?: '../phiksniyar-release-key.jks'
+            def keyPropsFile = rootProject.file("key.properties")
+            def keyProps = new Properties()
+            if (keyPropsFile.exists()) {
+                keyProps.load(new FileInputStream(keyPropsFile))
+            }
+            def storeFilePath = System.getenv("KEYSTORE_PATH") ?: keyProps.getProperty("storeFile") ?: '../phiksniyar-release-key.jks'
             def keystoreFile = file(storeFilePath)
-            if (keystoreFile.exists() && System.getenv("KEYSTORE_PASSWORD") != null) {
+            def storePass = System.getenv("KEYSTORE_PASSWORD") ?: keyProps.getProperty("storePassword")
+            def keyAliasVal = System.getenv("KEY_ALIAS") ?: keyProps.getProperty("keyAlias") ?: "phiksniyar"
+            def keyPass = System.getenv("KEY_PASSWORD") ?: keyProps.getProperty("keyPassword") ?: storePass
+
+            if (keystoreFile.exists() && storePass != null) {
                 storeFile keystoreFile
-                storePassword System.getenv("KEYSTORE_PASSWORD")
-                keyAlias System.getenv("KEY_ALIAS") ?: "phiksniyar"
-                keyPassword System.getenv("KEY_PASSWORD") ?: System.getenv("KEYSTORE_PASSWORD")
+                storePassword storePass
+                keyAlias keyAliasVal
+                keyPassword keyPass
             }
         }
     }

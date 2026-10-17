@@ -76,14 +76,14 @@ Download the official app today!
 ## 3. Mandatory Google Play Policy Declarations
 
 ### A. Privacy Policy URL
-- **Public URL:** `https://phiksniyar.com/privacy`
+- **Public URL:** `https://phiksniyar.in/privacy`
 - **Hosted Locally:** [`src/app/privacy/page.tsx`](file:///e:/Testing%20Idea/src/app/privacy/page.tsx)
 - **Compliance:** Aligned with Indian Digital Personal Data Protection (DPDP) Act 2023, UIDAI Aadhaar masking guidelines, and Google Play User Data Policy.
 
 ### B. Account Deletion URL (Mandatory for apps with account creation)
 - **In-App Deletion:** User taps profile avatar in navigation bar -> selects *Delete Account* -> confirms deletion.
-- **Web Deletion Request URL:** `https://phiksniyar.com/privacy#account-deletion`
-- **Direct Support Request:** `mailto:support@phiksniyar.com`
+- **Web Deletion Request URL:** `https://phiksniyar.in/privacy#account-deletion`
+- **Direct Support Request:** `mailto:support@phiksniyar.in`
 - **Data Scrubbing Action:** Immediately purges phone numbers, user names, saved addresses, and active session tokens. Historical completed invoices are scrubbed of PII into an anonymized financial ledger to satisfy Indian GST audit statutes.
 
 ### C. Target Audience & Content Rating
@@ -106,7 +106,7 @@ When completing the Google Play Console **Data Safety** section, answer as follo
 - **Answer:** **Yes** (All API communication occurs exclusively over HTTPS with TLS 1.3 / TLS 1.2).
 
 ### Do you provide a way for users to request that their data be deleted?
-- **Answer:** **Yes** (Both within the app via Account Settings and via public web URL `https://phiksniyar.com/privacy#account-deletion`).
+- **Answer:** **Yes** (Both within the app via Account Settings and via public web URL `https://phiksniyar.in/privacy#account-deletion`).
 
 ### Specific Data Types Collected:
 

@@ -89,7 +89,7 @@ export default function PrivacyPage() {
                 <strong>In-App Deletion:</strong> Tap your profile avatar in the navigation bar, select <em>Account Settings</em>, and click <em>Delete Account</em>.
               </li>
               <li>
-                <strong>Web Deletion Request:</strong> If you uninstalled the mobile app, you can request account deletion by emailing <a href="mailto:support@phiksniyar.com" style={{ color: 'var(--primary)', fontWeight: 600 }}>support@phiksniyar.com</a> with your registered mobile number, or by logging into the PhiksNiyar web portal.
+                <strong>Web Deletion Request:</strong> If you uninstalled the mobile app, you can request account deletion by emailing <a href="mailto:support@phiksniyar.in" style={{ color: 'var(--primary)', fontWeight: 600 }}>support@phiksniyar.in</a> with your registered mobile number, or by logging into the PhiksNiyar web portal.
               </li>
             </ul>
             <p>

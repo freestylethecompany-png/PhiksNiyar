@@ -49,7 +49,7 @@ All **39 automated security and lifecycle test cases** pass with zero errors, th
 
 3. **Capacitor Infinite Spinner Eliminated:**
    - *Issue:* `public/index.html` attempted to call non-standard `window.Capacitor?.getServerUrl()`, leaving users stranded on an infinite spinner when offline or unconfigured.
-   - *Fix:* Rewrote `public/index.html` with an instant production redirect (`https://phiksniyar.com`), a 3.5s watchdog timer, and an offline fallback card equipped with direct phone (`tel:+919848022338`) and WhatsApp (`wa.me/919848022338`) booking links.
+   - *Fix:* Rewrote `public/index.html` with an instant production redirect (`https://phiksniyar.in`), a 3.5s watchdog timer, and an offline fallback card equipped with direct phone (`tel:+919848022338`) and WhatsApp (`wa.me/919848022338`) booking links.
 
 4. **BOLA / IDOR Protections Enforced:**
    - *Issue:* Cross-tenant risk where customers could view or manipulate other users' bookings.
@@ -79,14 +79,14 @@ All **39 automated security and lifecycle test cases** pass with zero errors, th
 - **Target SDK:** `34` (Meets Google Play August 2024+ requirements)
 - **Debug APK Location:** `android/app/build/outputs/apk/debug/app-debug.apk` (10.43 MB)
 - **Signed Release AAB Location:** `android/app/build/outputs/bundle/release/app-release.aab` (8.83 MB)
-- **Keystore File:** `android/phiksniyar-release-key.jks`
+- **Keystore Security:** Keystore removed from repository tracking and `.gitignore` updated; signing credentials configured via untracked `android/key.properties` or environment variables.
 
 ---
 
 ## 6. Required Manual Actions by Founder
 
 Before launching live traffic:
-1. **Domain DNS:** Configure `A` or `CNAME` records for `phiksniyar.com` pointing to the production deployment server.
+1. **Domain DNS:** Configure `A` or `CNAME` records for `phiksniyar.in` pointing to the production deployment server.
 2. **Environment Variables:** Set production secrets (`JWT_SECRET`, `DATA_DIR`, `PLATFORM_UPI_VPA`).
 3. **Razorpay Activation:** Once business KYC is approved, provide live `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`. Until then, the platform runs in **Confirmed Cash-on-Service** mode.
 4. **Google Play Console:** Upload `app-release.aab` to Play Console internal/closed testing track and submit the Data Safety questionnaire.

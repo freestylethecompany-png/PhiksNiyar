@@ -1,0 +1,8 @@
+# PhiksNiyar Android Release Signing Configuration Template
+# COPY this file to android/key.properties (which is git-ignored)
+# NEVER commit your actual passwords or keys to source control!
+
+storeFile=../phiksniyar-release-key.jks
+storePassword=YourSecretKeystorePasswordHere
+keyAlias=phiksniyar
+keyPassword=YourSecretKeyPasswordHere

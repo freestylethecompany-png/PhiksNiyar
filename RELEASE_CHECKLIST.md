@@ -58,7 +58,7 @@
 
 | Gate ID | Native Feature | Status | Verification Detail |
 | :--- | :--- | :--- | :--- |
-| **AND-01** | **Remote Server URL** | **PASS** | `capacitor.config.ts` points to `https://phiksniyar.com` with `androidScheme: 'https'`. |
+| **AND-01** | **Remote Server URL** | **PASS** | `capacitor.config.ts` points to `https://phiksniyar.in` with `androidScheme: 'https'`. |
 | **AND-02** | **Offline Watchdog** | **PASS** | `public/index.html` watchdog triggers after 3.5s if unreachable, displaying offline assistance card. |
 | **AND-03** | **WhatsApp / Phone Fallback** | **PASS** | Direct links `tel:+919848022338` and `https://wa.me/919848022338` active in offline shell. |
 | **AND-04** | **Permissions Audit** | **PASS** | `AndroidManifest.xml` requests only `INTERNET` and `ACCESS_NETWORK_STATE`. No excessive runtime permissions. |
@@ -70,7 +70,7 @@
 
 | Blocker ID | Domain | Required Action | Responsible Party | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **BLK-01** | **Production Domain DNS** | Point `phiksniyar.com` A/CNAME record to deployment server | Founder | **BLOCKED** |
+| **BLK-01** | **Production Domain DNS** | Point `phiksniyar.in` A/CNAME record to deployment server | Founder | **BLOCKED** |
 | **BLK-02** | **Payment Gateway KYC** | Submit business documents to Razorpay for live Key ID/Secret | Founder | **BLOCKED** *(Can launch with Cash-on-Service)* |
 | **BLK-03** | **Google Play Console** | Create developer account, pay $25 fee, initiate closed testing track | Founder | **BLOCKED** |
 | **BLK-04** | **SMS Gateway Credit** | Add Fast2SMS credits for live transactional SMS delivery | Founder | **BLOCKED** *(App falls back to in-app OTP modal)* |

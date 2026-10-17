@@ -1,6 +1,6 @@
 # PhiksNiyar (ఫిక్స్ నియర్) — Production Deployment & Operations Runbook
 
-This guide covers deploying and operating **PhiksNiyar** (`https://phiksniyar.com`) in production with high availability, persistent storage, and disaster recovery.
+This guide covers deploying and operating **PhiksNiyar** (`https://phiksniyar.in`) in production with high availability, persistent storage, and disaster recovery.
 
 ---
 
@@ -53,7 +53,7 @@ CMD ["npm", "start"]
    JWT_SECRET=<generate_32_char_hex_secret>
    DATA_DIR=/app/data
    DATABASE_PATH=/app/data/phiksniyar.db
-   NEXT_PUBLIC_APP_URL=https://phiksniyar.com
+   NEXT_PUBLIC_APP_URL=https://phiksniyar.in
    PLATFORM_UPI_VPA=phiksniyar@upi
    PLATFORM_COMMISSION_PERCENT=10.0
    FAST2SMS_API_KEY=<optional_sms_key>
@@ -140,13 +140,13 @@ In the event of server corruption or data loss:
    # Expected output: ok
    ```
 5. Restart application container: `docker start phiksniyar-app`
-6. Verify live health: `curl -I https://phiksniyar.com/api/health`
+6. Verify live health: `curl -I https://phiksniyar.in/api/health`
 
 ---
 
 ## 6. Post-Deployment Verification Steps
 
-1. Open `https://phiksniyar.com` in an incognito window.
+1. Open `https://phiksniyar.in` in an incognito window.
 2. Confirm HTTPS certificate is valid.
 3. Test customer OTP login with mobile number `+91 98480 22338`.
 4. Perform a test booking for **Electrician** in **Kalamandir Center, Chilakaluripet**.
