@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'public',
   server: {
     // In production APK/AAB, points to live secure backend or local bundled assets
-    url: process.env.CAPACITOR_SERVER_URL || undefined,
+    url: process.env.CAPACITOR_SERVER_URL || 'https://phiksniyar.com',
     cleartext: false,
     androidScheme: 'https',
   },

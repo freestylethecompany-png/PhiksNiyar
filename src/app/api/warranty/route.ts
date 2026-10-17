@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/database';
 import { getAuthSession } from '@/lib/auth/session';
+import { generateSecureId } from '@/lib/security/cryptoUtils';
 
 export async function GET(request: Request) {
   try {
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
 
     // Audit log
     db.addAuditLog({
-      id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: generateSecureId('aud'),
       actorId: session.userId,
       actorRole: session.role,
       action: 'WARRANTY_CLAIMED',

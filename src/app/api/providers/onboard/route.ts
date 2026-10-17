@@ -7,6 +7,7 @@ import {
   maskIdentityNumber,
   hashIdentitySecure,
   verifyPlaceGeofence,
+  generateSecureId,
 } from '@/lib/security/cryptoUtils';
 import { getAuthSession } from '@/lib/auth/session';
 import { checkRateLimit, getClientIp } from '@/lib/security/rateLimiter';
@@ -192,7 +193,7 @@ export async function POST(request: Request) {
 
     // 6. Security Audit Trail
     db.addAuditLog({
-      id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: generateSecureId('aud'),
       actorId: user.id,
       actorRole: 'PROVIDER',
       action: 'PROVIDER_APPLICATION_SUBMITTED',

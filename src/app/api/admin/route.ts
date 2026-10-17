@@ -3,6 +3,7 @@ import { db } from '@/lib/db/database';
 import { VerificationStatus } from '@/lib/db/types';
 import { getAuthSession } from '@/lib/auth/session';
 import { canTransitionVerification } from '@/lib/db/stateMachine';
+import { generateSecureId } from '@/lib/security/cryptoUtils';
 
 export async function GET() {
   try {
@@ -105,7 +106,7 @@ export async function POST(request: Request) {
     db.saveProvider(provider);
 
     db.addAuditLog({
-      id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: generateSecureId('aud'),
       actorId: session.userId,
       actorRole: 'ADMIN',
       action: `PROVIDER_VERIFICATION_${newStatus}`,
@@ -157,7 +158,7 @@ export async function PATCH(request: Request) {
     db.updateSettings(updates);
 
     db.addAuditLog({
-      id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: generateSecureId('aud'),
       actorId: session.userId,
       actorRole: 'ADMIN',
       action: 'PLATFORM_SETTINGS_UPDATED',

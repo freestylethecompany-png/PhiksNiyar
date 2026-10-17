@@ -2,7 +2,7 @@ import { db } from '@/lib/db/database';
 import { canTransitionBooking } from '@/lib/db/stateMachine';
 import { Booking, BookingStatus, UserRole } from '@/lib/db/types';
 import { AuthSessionPayload } from '@/lib/auth/session';
-import { generateSecureDoorstepOtp } from '@/lib/security/cryptoUtils';
+import { generateSecureDoorstepOtp, generateSecureId } from '@/lib/security/cryptoUtils';
 
 export interface CreateBookingInput {
   providerId: string;
@@ -114,7 +114,7 @@ export class BookingService {
     const secureStartOtp = generateSecureDoorstepOtp();
     const providerUser = db.getUserById(provider.userId);
 
-    const bookingId = `bk-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const bookingId = generateSecureId('bk');
 
     const newBooking: Booking = {
       id: bookingId,
@@ -122,7 +122,7 @@ export class BookingService {
       customerName: customerUser.name,
       customerPhone: customerUser.phone,
       customerAddress: address || {
-        id: `addr-${Date.now()}`,
+        id: generateSecureId('addr'),
         userId: customerUser.id,
         title: 'Home',
         street: 'Main Road',
@@ -168,7 +168,7 @@ export class BookingService {
 
     // Record audit log
     db.addAuditLog({
-      id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: generateSecureId('aud'),
       actorId: customerUser.id,
       actorRole: session.role || 'CUSTOMER',
       action: 'BOOKING_CREATED',
@@ -279,7 +279,7 @@ export class BookingService {
         db.saveBooking(booking);
 
         db.addAuditLog({
-          id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          id: generateSecureId('aud'),
           actorId: session.userId,
           actorRole: effectiveRole,
           action: 'OTP_FAILED',
@@ -300,7 +300,7 @@ export class BookingService {
       delete booking.startOtp;
 
       db.addAuditLog({
-        id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        id: generateSecureId('aud'),
         actorId: session.userId,
         actorRole: effectiveRole,
         action: 'OTP_VERIFIED',
@@ -355,7 +355,7 @@ export class BookingService {
 
     // Audit log with accurate previousStatus and newStatus
     db.addAuditLog({
-      id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: generateSecureId('aud'),
       actorId: session.userId,
       actorRole: effectiveRole,
       action: `BOOKING_STATUS_${normalizedTarget}`,
@@ -414,7 +414,7 @@ export class BookingService {
     db.saveBooking(booking);
 
     db.addAuditLog({
-      id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: generateSecureId('aud'),
       actorId: session.userId,
       actorRole: effectiveRole,
       action: 'ADDITIONAL_CHARGES_PROPOSED',
@@ -482,7 +482,7 @@ export class BookingService {
     db.saveBooking(booking);
 
     db.addAuditLog({
-      id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: generateSecureId('aud'),
       actorId: session.userId,
       actorRole: effectiveRole,
       action: approved ? 'ADDITIONAL_CHARGES_APPROVED' : 'ADDITIONAL_CHARGES_DECLINED',
@@ -541,7 +541,7 @@ export class BookingService {
     db.saveBooking(booking);
 
     db.addAuditLog({
-      id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: generateSecureId('aud'),
       actorId: session.userId,
       actorRole: effectiveRole,
       action: 'CASH_PAYMENT_REPORTED',
@@ -608,7 +608,7 @@ export class BookingService {
     db.saveBooking(booking);
 
     db.addAuditLog({
-      id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: generateSecureId('aud'),
       actorId: session.userId,
       actorRole: effectiveRole,
       action: 'CASH_PAYMENT_CONFIRMED',
@@ -666,7 +666,7 @@ export class BookingService {
     db.saveBooking(booking);
 
     db.addAuditLog({
-      id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: generateSecureId('aud'),
       actorId: session.userId,
       actorRole: effectiveRole,
       action: 'PRICE_MATCHED_ON_PLATFORM',

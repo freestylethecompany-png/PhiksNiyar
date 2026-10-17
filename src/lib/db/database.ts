@@ -23,6 +23,7 @@ import {
 } from './types';
 import { INITIAL_CITIES, CHILAKALURIPET_AREAS } from '../constants/locations';
 import { SERVICE_CATEGORIES } from '../constants/categories';
+import { generateSecureId } from '../security/cryptoUtils';
 
 // Ensure data directory exists in the workspace, container, or serverless environment
 const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
@@ -565,7 +566,7 @@ class PersistentDatabase {
 
       // 6. Security Audit Log
       this.addAuditLog({
-        id: `aud-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        id: generateSecureId('aud'),
         actorId: userId,
         actorRole: user.role,
         action: 'USER_ACCOUNT_DELETED',
@@ -1716,7 +1717,7 @@ class PersistentDatabase {
     method?: 'RAZORPAY' | 'UPI' | 'CASH';
   }): PaymentOrderRecord {
     const record: PaymentOrderRecord = {
-      id: `pay-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      id: generateSecureId('pay'),
       bookingId: data.bookingId,
       orderId: data.orderId,
       amount: data.amount,

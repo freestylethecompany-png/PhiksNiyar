@@ -110,3 +110,13 @@ export function verifyPlaceGeofence(
     message: `Location is ${distanceKm} km away, exceeding maximum 25 km operating radius for Chilakaluripet.`,
   };
 }
+
+/**
+ * Generates a cryptographically secure, collision-resistant identifier.
+ * Uses crypto.randomBytes to prevent predictability and ID collision vulnerabilities.
+ */
+export function generateSecureId(prefix = 'id'): string {
+  const timestamp = Date.now().toString(36);
+  const randomSuffix = crypto.randomBytes(6).toString('hex');
+  return `${prefix}-${timestamp}-${randomSuffix}`;
+}

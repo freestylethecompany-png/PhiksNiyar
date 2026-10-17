@@ -1,94 +1,155 @@
-# PhiksNiyar (ఫిక్స్ నియర్) — Commercial Production Deployment Guide
+# PhiksNiyar (ఫిక్స్ నియర్) — Production Deployment & Operations Runbook
 
-This guide walks you through deploying **PhiksNiyar** (`https://phiksniyar.in`) to production across recommended commercial hosting platforms.
+This guide covers deploying and operating **PhiksNiyar** (`https://phiksniyar.com`) in production with high availability, persistent storage, and disaster recovery.
 
 ---
 
-## 🎯 Architectural Overview for Production
+## 1. Supported Architecture Topologies
 
-PhiksNiyar provides two supported production deployment topologies:
-
-| Deployment Platform | Storage Type | Recommended For | Setup Time |
+| Architecture | Database Engine | Recommended Host | Best For |
 | :--- | :--- | :--- | :--- |
-| **Railway / Render / Fly.io / VPS** | Persistent Disk Volume (`/app/data`) | **Single-container production** (Fastest, zero external latency, sub-ms queries) | **~3 mins** |
-| **Vercel / Cloudflare Pages** | Cloud PostgreSQL (Neon / Supabase) | **Serverless global edge** | **~5 mins** |
+| **Option A (Recommended)** | SQLite with WAL Mode on Persistent Volume | **Railway / Render / Fly.io / VPS Docker** | Single-container, sub-millisecond local queries, zero external database fees, 100% cost control. |
+| **Option B (Serverless)** | Managed Cloud PostgreSQL (Neon / Supabase) | **Vercel / AWS Amplify** | Stateless serverless edge; requires external database connection pooler. |
 
 ---
 
-## 🚀 Recommended Option 1: Railway / Render / Fly.io (Docker with Persistent Volume)
+## 2. Option A: Docker Deployment with Persistent Volume (Recommended)
 
-This is the recommended production deployment because PhiksNiyar's WAL-mode embedded database engine delivers **sub-millisecond query responses with zero database connection pool limits and zero monthly external database fees**.
+### Step 1: Multi-Stage Dockerfile Verification
+The repository includes an optimized multi-stage `Dockerfile`:
+```dockerfile
+# Multi-stage production build
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
 
-### Step 1: Push Code to GitHub
-```bash
-git add .
-git commit -m "feat: PhiksNiyar production release"
-git push origin main
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/data ./data
+
+# Expose Next.js default port
+EXPOSE 3000
+CMD ["npm", "start"]
 ```
 
-### Step 2: Deploy to Railway
-1. Log into [railway.app](https://railway.app).
-2. Click **"New Project"** → **"Deploy from GitHub repo"** → Select your repository.
-3. Go to **Settings** → **Volumes**:
-   - Click **"Add Volume"**
-   - Mount Path: `/app/data`
-4. Go to **Variables** and add:
-   - `NODE_ENV`: `production`
-   - `JWT_SECRET`: Generate a random 32-character string (`openssl rand -hex 32`)
-   - `DATA_DIR`: `/app/data`
-   - `DATABASE_PATH`: `/app/data/phiksniyar.db`
-   - `NEXT_PUBLIC_APP_URL`: `https://phiksniyar.in` (or your assigned Railway domain)
-   - `PLATFORM_UPI_VPA`: `phiksniyar.payments@okhdfcbank`
-   - `PLATFORM_COMMISSION_PERCENT`: `10.0`
-   - `FAST2SMS_API_KEY`: *(Optional)* Your Fast2SMS API Key for Indian transactional OTPs
-   - `RAZORPAY_KEY_ID`: *(Optional)* Razorpay Key ID
-   - `RAZORPAY_KEY_SECRET`: *(Optional)* Razorpay Key Secret
-   - `NEXT_PUBLIC_RAZORPAY_KEY_ID`: *(Optional)* Public Razorpay Key ID
-   - `RAZORPAY_WEBHOOK_SECRET`: *(Optional)* Webhook verification secret
-5. Railway automatically builds using the included multi-stage [Dockerfile](./Dockerfile) and deploys your live site with automatic SSL.
+### Step 2: Deploy to Railway / Render / VPS
+1. **Repository:** Push `launch/48-hour-mvp` or merge into `main`.
+2. **Persistent Volume:**
+   - On Railway: Go to **Settings** → **Volumes** → **Add Volume** → Mount to `/app/data`.
+   - On Render: Go to **Disks** → **Add Disk** → Mount path `/app/data` (Size: 1 GB+).
+   - On VPS: Mount host directory: `-v /var/data/phiksniyar:/app/data`.
+3. **Environment Variables:**
+   ```env
+   NODE_ENV=production
+   PORT=3000
+   JWT_SECRET=<generate_32_char_hex_secret>
+   DATA_DIR=/app/data
+   DATABASE_PATH=/app/data/phiksniyar.db
+   NEXT_PUBLIC_APP_URL=https://phiksniyar.com
+   PLATFORM_UPI_VPA=phiksniyar@upi
+   PLATFORM_COMMISSION_PERCENT=10.0
+   FAST2SMS_API_KEY=<optional_sms_key>
+   RAZORPAY_KEY_ID=<optional_razorpay_key>
+   RAZORPAY_KEY_SECRET=<optional_razorpay_secret>
+   ```
 
 ---
 
-## 🚀 Option 2: Deploy to Vercel (with Neon / Supabase Cloud PostgreSQL)
+## 3. Database Persistence & WAL Configuration
 
-If deploying to Vercel serverless edge:
-
-### Step 1: Provision Cloud PostgreSQL
-1. Create a PostgreSQL database at [Neon.tech](https://neon.tech) or [Supabase.com](https://supabase.com).
-2. Open the SQL Editor and execute the included [schema.sql](./src/lib/db/schema.sql) to create the production tables, indexes, and RLS policies.
-3. Copy your connection string:
-   ```
-   DATABASE_URL=postgresql://postgres:[PASSWORD]@[HOST]:5432/phiksniyar?sslmode=require
-   ```
-
-### Step 2: Connect to Vercel
-1. Import your repository in [vercel.com](https://vercel.com).
-2. Add Environment Variables:
-   - `DATABASE_URL`
-   - `JWT_SECRET`
-   - `NEXT_PUBLIC_APP_URL`
-   - `PLATFORM_UPI_VPA`
-   - `ALLOW_DEMO_PERSONAS`: `false`
-   - `NEXT_PUBLIC_DEMO_MODE`: `false`
-3. Click **Deploy**.
-
----
-
-## 🔍 Health & Verification
-Once deployed, verify your live system health:
-```bash
-curl https://phiksniyar.in/api/health
+PhiksNiyar's database engine in `src/lib/db/database.ts` initializes SQLite with:
+```sql
+PRAGMA journal_mode = WAL;
+PRAGMA busy_timeout = 5000;
+PRAGMA foreign_keys = ON;
+PRAGMA synchronous = NORMAL;
 ```
-Expected response:
+- **WAL Mode (Write-Ahead Logging):** Allows concurrent readers while a write is occurring.
+- **Busy Timeout (5000ms):** Prevents `SQLITE_BUSY` errors during simultaneous write bursts.
+- **Crash Safety:** Writes are committed to `-wal` and `-shm` companion files, guaranteeing atomicity across sudden restarts.
+
+---
+
+## 4. Production Health Checks
+
+The server exposes a zero-leak health check endpoint:
+```http
+GET /api/health
+```
+**Healthy Response (200 OK):**
 ```json
 {
   "status": "healthy",
-  "product": "PhiksNiyar (ఫిక్స్ నియర్)",
-  "market": "Chilakaluripet, AP, India",
-  "version": "1.0.0",
-  "database": {
-    "connected": true,
-    "topology": "SQLite-WAL"
-  }
+  "database": "connected",
+  "engine": "sqlite",
+  "timestamp": "2026-10-17T20:25:00.000Z"
 }
 ```
+If the database connection fails or the disk volume is full, the route returns `503 Service Unavailable`. Use this endpoint for container liveness/readiness probes.
+
+---
+
+## 5. Automated Backup & Recovery Runbook
+
+### Automatic Daily Backup Script
+Place this script at `/var/scripts/backup-phiksniyar.sh` on your VPS or schedule it as a cron task:
+
+```bash
+#!/bin/bash
+# PhiksNiyar Production Database Backup Script
+set -e
+
+BACKUP_DIR="/var/backups/phiksniyar"
+DB_SOURCE="/app/data/phiksniyar.db"
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+BACKUP_FILE="${BACKUP_DIR}/phiksniyar_backup_${TIMESTAMP}.db"
+
+mkdir -p "$BACKUP_DIR"
+
+# Perform safe live backup using SQLite online backup API
+sqlite3 "$DB_SOURCE" ".backup '${BACKUP_FILE}'"
+
+# Compress backup
+gzip -9 "$BACKUP_FILE"
+
+# Keep last 30 daily backups, delete older
+find "$BACKUP_DIR" -name "phiksniyar_backup_*.db.gz" -mtime +30 -delete
+
+echo "[$(date)] Backup completed successfully: ${BACKUP_FILE}.gz"
+```
+
+### Disaster Recovery Procedure
+In the event of server corruption or data loss:
+1. Stop the application container: `docker stop phiksniyar-app`
+2. Locate the most recent valid backup: `ls -lt /var/backups/phiksniyar/`
+3. Uncompress to target path:
+   ```bash
+   gunzip -c /var/backups/phiksniyar/phiksniyar_backup_YYYYMMDD_HHMMSS.db.gz > /app/data/phiksniyar.db
+   ```
+4. Verify file integrity:
+   ```bash
+   sqlite3 /app/data/phiksniyar.db "PRAGMA integrity_check;"
+   # Expected output: ok
+   ```
+5. Restart application container: `docker start phiksniyar-app`
+6. Verify live health: `curl -I https://phiksniyar.com/api/health`
+
+---
+
+## 6. Post-Deployment Verification Steps
+
+1. Open `https://phiksniyar.com` in an incognito window.
+2. Confirm HTTPS certificate is valid.
+3. Test customer OTP login with mobile number `+91 98480 22338`.
+4. Perform a test booking for **Electrician** in **Kalamandir Center, Chilakaluripet**.
+5. Switch to provider persona and confirm the booking alert appears.
+6. Verify 4-digit Doorstep Start-OTP entry transitions the job to `IN_PROGRESS`.
+7. Mark job complete and verify the **7-Day Warranty Record** is generated.

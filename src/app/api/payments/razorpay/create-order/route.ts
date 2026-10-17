@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/database';
 import { getAuthSession } from '@/lib/auth/session';
+import { generateSecureId } from '@/lib/security/cryptoUtils';
 
 export async function POST(request: Request) {
   try {
@@ -93,7 +94,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const simulatedOrderId = `order_${Math.random().toString(36).substring(2, 12).toUpperCase()}`;
+    const simulatedOrderId = generateSecureId('order');
 
     // Persist sandbox order binding in development
     db.createPaymentOrder({
