@@ -134,25 +134,25 @@ When completing the Google Play Console **Data Safety** section, answer as follo
 
 ---
 
-## 5. Play Console Reviewer Credentials (Test Account)
+## 5. Play Console App Access Reviewer Instructions
 
 For Google Play policy review and automated login testing:
 
-- **Reviewer Mobile Number:** `+91 98480 22338`
-- **Reviewer OTP Code:** Sent via SMS or configured test bypass in review environment
-- **Role:** `CUSTOMER`
+- **App Access Configuration:** Select **"All or some functionality is restricted"** in Play Console.
+- **Dedicated Test Account:** When adding credentials in Google Play Console, use a dedicated test customer number provisioned for reviewer access.
+  - *Note:* **Never** submit a founder's personal phone number or live OTP credentials in public documentation or Play Console instructions.
 - **Reviewer Note:**
-  > "PhiksNiyar is a hyperlocal home services marketplace in Chilakaluripet, AP, India. To test the booking and service discovery workflow without dispatching a live technician, select any service category (Electrician, Plumber) and choose 'Cash on Service' or Razorpay test payment. To test the Account Deletion flow, tap the profile menu in the top right header and click 'Delete Account'."
+  > "PhiksNiyar is a hyperlocal home services marketplace serving Chilakaluripet, AP, India. To test the booking and service discovery workflow without dispatching a live technician, select any service category (Electrician, Plumber) and choose 'Cash on Service'. To test the Account Deletion flow, tap the profile menu in the top right header and click 'Delete Account'."
 
 ---
 
 ## 6. Android Technical Release Configuration
 
 - **Application ID:** `com.phiksniyar.app`
-- **Min SDK:** 24 (Android 7.0 Nougat — covers 99.1% of active Android devices)
-- **Compile SDK:** 36 (Android 15+)
-- **Target SDK:** 36 (Complies with Google Play requirement of Target API 34+)
-- **Signing Keystore:** `android/phiksniyar-release-key.jks`
+- **Min SDK:** 22 (Android 5.1 Lollipop)
+- **Compile SDK:** 34 (Android 14) / Compatible with SDK 36
+- **Target SDK:** 34 (Complies with Google Play Target API 34+ requirement)
+- **Signing Keystore:** Untracked release upload key configured via `android/key.properties` or environment variables (never committed to repository).
 - **Key Alias:** `phiksniyar`
 - **Keystore Type:** PKCS12 (Standard, secure)
 

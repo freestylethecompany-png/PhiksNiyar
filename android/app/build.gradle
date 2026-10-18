@@ -23,13 +23,23 @@ android {
             if (keyPropsFile.exists()) {
                 keyProps.load(new FileInputStream(keyPropsFile))
             }
-            def storeFilePath = System.getenv("KEYSTORE_PATH") ?: keyProps.getProperty("storeFile") ?: '../phiksniyar-release-key.jks'
-            def keystoreFile = file(storeFilePath)
+            def storeFilePath = System.getenv("KEYSTORE_PATH") ?: keyProps.getProperty("storeFile")
+            def keystoreFile = storeFilePath ? file(storeFilePath) : null
             def storePass = System.getenv("KEYSTORE_PASSWORD") ?: keyProps.getProperty("storePassword")
-            def keyAliasVal = System.getenv("KEY_ALIAS") ?: keyProps.getProperty("keyAlias") ?: "phiksniyar"
+            def keyAliasVal = System.getenv("KEY_ALIAS") ?: keyProps.getProperty("keyAlias")
             def keyPass = System.getenv("KEY_PASSWORD") ?: keyProps.getProperty("keyPassword") ?: storePass
 
-            if (keystoreFile.exists() && storePass != null) {
+            def isReleaseTask = gradle.startParameter.taskNames.any { it.toLowerCase().contains("release") }
+            if (isReleaseTask) {
+                if (!storeFilePath || keystoreFile == null || !keystoreFile.exists()) {
+                    throw new GradleException("Release build failed: Release keystore file not found at '${storeFilePath}'. Please configure KEYSTORE_PATH environment variable or 'storeFile' in android/key.properties. Release builds must never be silently produced unsigned.")
+                }
+                if (!storePass || !keyAliasVal) {
+                    throw new GradleException("Release build failed: Missing release keystore credentials. Please configure KEYSTORE_PASSWORD and KEY_ALIAS environment variables or in android/key.properties. Release builds must never be silently produced unsigned.")
+                }
+            }
+
+            if (keystoreFile != null && keystoreFile.exists() && storePass != null) {
                 storeFile keystoreFile
                 storePassword storePass
                 keyAlias keyAliasVal
@@ -39,9 +49,7 @@ android {
     }
     buildTypes {
         release {
-            if (signingConfigs.release.storeFile != null) {
-                signingConfig signingConfigs.release
-            }
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

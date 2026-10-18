@@ -20,9 +20,12 @@
 | **QG-03** | **Production Web Build** | `npm run build` (`next build` Turbopack) | **PASS** | 28/28 routes compiled (22 dynamic API endpoints, 6 static routes). |
 | **QG-04** | **Android Debug APK Build** | `cd android && gradlew.bat assembleDebug` | **PASS** | `BUILD SUCCESSFUL in 1m 12s`. Output: `android/app/build/outputs/apk/debug/app-debug.apk` (10.43 MB). |
 | **QG-05** | **Android Release Bundle Build** | `cd android && gradlew.bat bundleRelease` | **PASS** | `BUILD SUCCESSFUL in 1m 37s`. Output: `android/app/build/outputs/bundle/release/app-release.aab` (8.83 MB). |
-| **QG-06** | **Android Signing Verification** | Gradle `signReleaseBundle` Task | **PASS** | Signed with PKCS12 release keystore `phiksniyar-release-key.jks` using environment variables. |
-| **QG-07** | **E2E Marketplace Smoke Test** | `npm run test:smoke` (`scripts/smoke-test.js`) | **PASS** | `SMOKE TEST RESULTS: 10 / 10 PASSED` (Full lifecycle: discovery → booking → OTP → quote approval → cash confirmation → warranty → review). |
+| **QG-06** | **Android Signing Verification** | `jarsigner -verify -verbose -certs app-release.aab` | **PASS** | `jar verified.` Signed with RSA 2048-bit key (`CN=PhiksNiyar Technologies`) using untracked upload keystore. |
+| **QG-07** | **E2E Marketplace Smoke Test** | `npm run test:smoke` (`scripts/smoke-test.js`) | **PASS** | `SMOKE TEST RESULTS: 10 / 10 PASSED` (Isolated temporary SQLite DB; production data completely untouched). |
 | **QG-08** | **Atomic Database Backup** | `npm run db:backup` (`scripts/db-backup.ts`) | **PASS** | Successfully generated binary `.db` snapshot and structured `.json` table archive with verified row counts. |
+
+> [!NOTE]
+> **Test Environment & CI Disclosure:** All quality, security, and build gates above were executed and verified locally in the clean project environment. Remote GitHub Actions workflow runs have not been executed for this branch, so no remote CI status is claimed.
 
 ---
 

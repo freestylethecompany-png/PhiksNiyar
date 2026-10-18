@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test:security": "npx tsx scripts/security-audit-suite.js",
@@ -22,6 +22,7 @@
     "@types/leaflet": "^1.9.22",
     "@types/pg": "^8.23.1",
     "better-sqlite3": "^13.0.3",
+    "csstype": "^3.2.3",
     "jsonwebtoken": "^9.0.3",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.52.0",

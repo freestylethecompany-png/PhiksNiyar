@@ -148,7 +148,7 @@ In the event of server corruption or data loss:
 
 1. Open `https://phiksniyar.in` in an incognito window.
 2. Confirm HTTPS certificate is valid.
-3. Test customer OTP login with mobile number `+91 98480 22338`.
+3. Test customer OTP login with an authorized test mobile number.
 4. Perform a test booking for **Electrician** in **Kalamandir Center, Chilakaluripet**.
 5. Switch to provider persona and confirm the booking alert appears.
 6. Verify 4-digit Doorstep Start-OTP entry transitions the job to `IN_PROGRESS`.

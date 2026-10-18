@@ -2,7 +2,7 @@
 # COPY this file to android/key.properties (which is git-ignored)
 # NEVER commit your actual passwords or keys to source control!
 
-storeFile=../phiksniyar-release-key.jks
+storeFile=C:/path/to/secure/phiksniyar-upload-key.jks
 storePassword=YourSecretKeystorePasswordHere
-keyAlias=phiksniyar
+keyAlias=upload
 keyPassword=YourSecretKeyPasswordHere

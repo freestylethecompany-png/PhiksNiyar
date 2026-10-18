@@ -3,9 +3,15 @@
 
 const assert = require('assert');
 const path = require('path');
+const os = require('os');
+const fs = require('fs');
 const crypto = require('crypto');
 
-// Initialize database & services
+// Enforce strictly isolated ephemeral SQLite test database to protect production data
+const smokeDbPath = path.join(os.tmpdir(), `phiksniyar-smoke-${Date.now()}-${crypto.randomBytes(4).toString('hex')}.db`);
+process.env.DATABASE_PATH = smokeDbPath;
+
+// Initialize database & services against the isolated test database
 const { db } = require('../src/lib/db/database');
 const { BookingService } = require('../src/lib/bookings/bookingService');
 const { generateSecureId } = require('../src/lib/security/cryptoUtils');
@@ -325,6 +331,15 @@ runSmokeTest('SMK-10: Tenant Isolation - Attacker cannot view or modify smoke bo
 console.log('\n====================================================');
 console.log(`   SMOKE TEST RESULTS: ${passedTests} / ${totalTests} PASSED   `);
 console.log('====================================================\n');
+
+// Clean up isolated temporary smoke database files
+try {
+  if (fs.existsSync(smokeDbPath)) fs.unlinkSync(smokeDbPath);
+  if (fs.existsSync(`${smokeDbPath}-wal`)) fs.unlinkSync(`${smokeDbPath}-wal`);
+  if (fs.existsSync(`${smokeDbPath}-shm`)) fs.unlinkSync(`${smokeDbPath}-shm`);
+} catch (cleanupErr) {
+  // Ignore unlink lock errors on Windows
+}
 
 if (passedTests !== totalTests) {
   process.exit(1);

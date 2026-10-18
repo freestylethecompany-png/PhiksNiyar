@@ -51,23 +51,31 @@ All test suites and build scripts have been executed and verified in this enviro
 | Suite / Check | Command Executed | Result | Summary / Metrics |
 | :--- | :--- | :--- | :--- |
 | **Security Audit Suite** | `npm run test:security` | **PASS** | **39 / 39 passed** (BOLA, OTP lockout, address masking, token hygiene, injection prevention). |
-| **Marketplace Smoke Test** | `npm run test:smoke` | **PASS** | **10 / 10 passed** (Full discovery → booking → OTP → quote → cash → warranty lifecycle). |
+| **Marketplace Smoke Test** | `npm run test:smoke` | **PASS** | **10 / 10 passed** (Executed against isolated temporary SQLite DB in `os.tmpdir()`; 0 production data impact). |
 | **TypeScript Validation** | `npm run typecheck` | **PASS** | Zero type errors across Next.js and backend services. |
 | **Turbopack Web Build** | `npm run build` | **PASS** | 28 / 28 routes compiled (22 dynamic server API routes, 6 static pages). |
 | **Atomic Database Backup** | `npm run db:backup` | **PASS** | Snapshot `.db` + structured `.json` table dump created with verified row counts. |
 | **Android Debug APK** | `./gradlew.bat assembleDebug` | **PASS** | Output: `android/app/build/outputs/apk/debug/app-debug.apk` (**10.43 MB**). |
 | **Android Release AAB** | `./gradlew.bat bundleRelease` | **PASS** | Output: `android/app/build/outputs/bundle/release/app-release.aab` (**8.83 MB**). |
+| **Independent AAB Verification** | `jarsigner -verify -verbose -certs` | **PASS** | `jar verified.` Cryptographically signed with SHA256withRSA 2048-bit key (`CN=PhiksNiyar Technologies`). |
+
+> [!NOTE]
+> **CI & Execution Environment Notice:** All gates were executed and verified locally on this branch. No remote GitHub Actions runs have been executed for `launch/48-hour-mvp`, so no remote CI status is claimed.
 
 ---
 
 ## 3. Critical Defects & Remediations Performed
 
-1. **Compromised Keystore Exposure (P0 - Resolved in Repo):**
-   - *Status:* `android/phiksniyar-release-key.jks` deleted from Git index. `.gitignore` updated to ignore `*.jks`, `*.keystore`, `*.aab`, `*.apk`, and `key.properties`.
-   - *Remediation Required:* If this keystore was ever used on Google Play Console with Google Play App Signing disabled, a developer console ticket is required to reset the upload key. If this app is new to Play Console, register a fresh upload key outside Git.
+1. **Compromised Keystore Exposure (P0 - Resolved in Current Working Tree):**
+   - *Status:* `android/phiksniyar-release-key.jks` removed from Git tracking. `.gitignore` updated to block `*.jks`, `*.keystore`, `*.aab`, `*.apk`, and `key.properties`.
+   - *Git History Reality:* The keystore file still exists in prior historical commits (`88122572`). Per security rules, Git history was **not** rewritten or force-pushed without explicit founder authorization.
+   - *Authoritative Remediation Path:*
+     - **If the app has NEVER been published to Google Play:** The compromised key has zero standing on Google Play. Discard the compromised key. A brand-new upload keystore (`phiksniyar-upload-key.jks`) has been generated locally in `C:\Users\surya\.phiksniyar-keys\` outside the repository. When you publish to Google Play for the first time, Google Play App Signing will register this new upload key.
+     - **If the app WAS already published with Google Play App Signing:** Submit an **Upload Key Reset Request** directly in Google Play Console (**Release** > **Setup** > **App signing** > **Request upload key reset** > "The upload key was compromised"). Export the certificate from the new key (`keytool -export -rfc -keystore phiksniyar-upload-key.jks -alias upload -file upload_cert.pem`) and upload it. Google will activate it within 48 hours.
 
-2. **Hardcoded Build Credentials (P0 - Resolved):**
-   - *Status:* `android/app/build.gradle` refactored to read from untracked `key.properties` or environment variables (`KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`). Fallback hardcoded passwords removed.
+2. **Hardcoded Build Credentials & Silent Unsigned Fallback (P0 - Resolved):**
+   - *Status:* `android/app/build.gradle` refactored to read from untracked `key.properties` or environment variables. All hardcoded fallback passwords and filenames were eliminated.
+   - *Fail-Fast Enforcement:* Release build tasks (`bundleRelease`, `assembleRelease`) now throw a direct `GradleException` and terminate if valid signing credentials or keystores are missing, preventing silent production of unsigned artifacts.
 
 3. **Predictable Identifiers (P0 - Resolved):**
    - *Status:* `Math.random` replaced with `generateSecureId(prefix)` backed by Node.js `crypto.randomBytes(6)` and base36 timestamps.
