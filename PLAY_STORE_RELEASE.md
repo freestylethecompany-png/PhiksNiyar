@@ -153,7 +153,7 @@ For Google Play policy review and automated login testing:
 - **Compile SDK:** 34 (Android 14) / Compatible with SDK 36
 - **Target SDK:** 34 (Complies with Google Play Target API 34+ requirement)
 - **Signing Keystore:** Untracked release upload key configured via `android/key.properties` or environment variables (never committed to repository).
-- **Key Alias:** `phiksniyar`
+- **Key Alias:** `upload` (configured in untracked `android/key.properties`)
 - **Keystore Type:** PKCS12 (Standard, secure)
 
 ### Release Build Commands:

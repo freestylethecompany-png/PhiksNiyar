@@ -57,7 +57,7 @@ All test suites and build scripts have been executed and verified in this enviro
 | **Atomic Database Backup** | `npm run db:backup` | **PASS** | Snapshot `.db` + structured `.json` table dump created with verified row counts. |
 | **Android Debug APK** | `./gradlew.bat assembleDebug` | **PASS** | Output: `android/app/build/outputs/apk/debug/app-debug.apk` (**10.43 MB**). |
 | **Android Release AAB** | `./gradlew.bat bundleRelease` | **PASS** | Output: `android/app/build/outputs/bundle/release/app-release.aab` (**8.83 MB**). |
-| **Independent AAB Verification** | `jarsigner -verify -verbose -certs` | **PASS** | `jar verified.` Cryptographically signed with SHA256withRSA 2048-bit key (`CN=PhiksNiyar Technologies`). |
+| **Independent AAB Verification** | `jarsigner -verify -verbose -certs` | **PASS** | `jar verified.` Cryptographically signed with SHA384withRSA 2048-bit key (`CN=PhiksNiyar Technologies`, SHA256: `EA:3A:D4:2F:...`, valid to 2054). |
 
 > [!NOTE]
 > **CI & Execution Environment Notice:** All gates were executed and verified locally on this branch. No remote GitHub Actions runs have been executed for `launch/48-hour-mvp`, so no remote CI status is claimed.
@@ -66,12 +66,12 @@ All test suites and build scripts have been executed and verified in this enviro
 
 ## 3. Critical Defects & Remediations Performed
 
-1. **Compromised Keystore Exposure (P0 - Resolved in Current Working Tree):**
+1. **Compromised Keystore Exposure & Secret Rotation (P0 - Resolved in Current Working Tree):**
    - *Status:* `android/phiksniyar-release-key.jks` removed from Git tracking. `.gitignore` updated to block `*.jks`, `*.keystore`, `*.aab`, `*.apk`, and `key.properties`.
    - *Git History Reality:* The keystore file still exists in prior historical commits (`88122572`). Per security rules, Git history was **not** rewritten or force-pushed without explicit founder authorization.
-   - *Authoritative Remediation Path:*
-     - **If the app has NEVER been published to Google Play:** The compromised key has zero standing on Google Play. Discard the compromised key. A brand-new upload keystore (`phiksniyar-upload-key.jks`) has been generated locally in `C:\Users\surya\.phiksniyar-keys\` outside the repository. When you publish to Google Play for the first time, Google Play App Signing will register this new upload key.
-     - **If the app WAS already published with Google Play App Signing:** Submit an **Upload Key Reset Request** directly in Google Play Console (**Release** > **Setup** > **App signing** > **Request upload key reset** > "The upload key was compromised"). Export the certificate from the new key (`keytool -export -rfc -keystore phiksniyar-upload-key.jks -alias upload -file upload_cert.pem`) and upload it. Google will activate it within 48 hours.
+   - *Authoritative Remediation Path & Secret Rotation:*
+     - **If the app has NEVER been published to Google Play:** The compromised key has zero standing on Google Play. Discard the compromised key. A brand-new upload keystore (`phiksniyar-upload-key-v2.jks`) has been generated locally in `C:\Users\surya\.phiksniyar-keys\` outside the repository using high-entropy random secrets without logging or exposing credentials to terminal logs. When you publish to Google Play for the first time, Google Play App Signing will register this new upload key.
+     - **If the app WAS already published with Google Play App Signing:** Submit an **Upload Key Reset Request** directly in Google Play Console (**Release** > **Setup** > **App signing** > **Request upload key reset** > "The upload key was compromised"). Export the certificate from the new key (`keytool -export -rfc -keystore phiksniyar-upload-key-v2.jks -alias upload -file upload_cert.pem`) and upload it. Google will activate it within 48 hours.
 
 2. **Hardcoded Build Credentials & Silent Unsigned Fallback (P0 - Resolved):**
    - *Status:* `android/app/build.gradle` refactored to read from untracked `key.properties` or environment variables. All hardcoded fallback passwords and filenames were eliminated.
